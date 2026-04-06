@@ -1,0 +1,173 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ============================================================
+// Auth
+// ============================================================
+
+model User {
+  id               String    @id @default(uuid()) @db.Uuid
+  email            String    @unique
+  plan             String    @default("free") // free|plus|pro|coach
+  rating           Int       @default(1500)
+  stripeCustomerId String?   @unique @map("stripe_customer_id")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+
+  sessions         Session[]
+  subscription     Subscription?
+  conceptProgress  ConceptProgress[]
+  analyses         Analysis[]
+  dailyUsage       DailyUsage[]
+
+  @@map("users")
+}
+
+model Session {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  id        String   @id @default(uuid()) @db.Uuid
+  email     String
+  code      String
+  expiresAt DateTime @map("expires_at")
+  attempts  Int      @default(0)
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([email, code])
+  @@map("verification_tokens")
+}
+
+// ============================================================
+// Subscription
+// ============================================================
+
+model Subscription {
+  id                   String   @id @default(uuid()) @db.Uuid
+  userId               String   @unique @map("user_id") @db.Uuid
+  stripeSubscriptionId String   @unique @map("stripe_subscription_id")
+  plan                 String   // plus|pro|coach
+  status               String   // active|canceled|past_due
+  currentPeriodStart   DateTime @map("current_period_start")
+  currentPeriodEnd     DateTime @map("current_period_end")
+  cancelAtPeriodEnd    Boolean  @default(false) @map("cancel_at_period_end")
+  createdAt            DateTime @default(now()) @map("created_at")
+  updatedAt            DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("subscriptions")
+}
+
+// ============================================================
+// Concepts
+// ============================================================
+
+model Concept {
+  id            String   @id @default(uuid()) @db.Uuid
+  slug          String   @unique
+  name          String
+  summary       String
+  description   String
+  difficulty    String   // beginner|intermediate|advanced
+  positionCount Int      @map("position_count")
+  sortOrder     Int      @default(0) @map("sort_order")
+  isFree        Boolean  @default(false) @map("is_free")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  positions ConceptPosition[]
+  progress  ConceptProgress[]
+
+  @@map("concepts")
+}
+
+model ConceptPosition {
+  id          String   @id @default(uuid()) @db.Uuid
+  conceptId   String   @map("concept_id") @db.Uuid
+  fen         String
+  strongMove  String   @map("strong_move")
+  weakMove    String   @map("weak_move")
+  explanation String
+  arrows      Json     @default("[]")
+  sortOrder   Int      @default(0) @map("sort_order")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  concept Concept @relation(fields: [conceptId], references: [id], onDelete: Cascade)
+
+  @@index([conceptId, sortOrder])
+  @@map("concept_positions")
+}
+
+model ConceptProgress {
+  id                 String    @id @default(uuid()) @db.Uuid
+  userId             String    @map("user_id") @db.Uuid
+  conceptId          String    @map("concept_id") @db.Uuid
+  score              Float     @default(0)
+  positionsCompleted Int       @default(0) @map("positions_completed")
+  correctStreak      Int       @default(0) @map("correct_streak")
+  lastReviewed       DateTime? @map("last_reviewed")
+  nextReview         DateTime? @map("next_review")
+  createdAt          DateTime  @default(now()) @map("created_at")
+  updatedAt          DateTime  @updatedAt @map("updated_at")
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  concept Concept @relation(fields: [conceptId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, conceptId])
+  @@index([userId, nextReview])
+  @@map("concept_progress")
+}
+
+// ============================================================
+// Analysis
+// ============================================================
+
+model Analysis {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  type      String   // position|game
+  fen       String?
+  pgn       String?
+  userColor String?  @map("user_color")
+  result    Json
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt(sort: Desc)])
+  @@map("analyses")
+}
+
+// ============================================================
+// Usage Tracking
+// ============================================================
+
+model DailyUsage {
+  id                String   @id @default(uuid()) @db.Uuid
+  userId            String   @map("user_id") @db.Uuid
+  date              DateTime @db.Date
+  positionAnalyses  Int      @default(0) @map("position_analyses")
+  gameAnalyses      Int      @default(0) @map("game_analyses")
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, date])
+  @@map("daily_usage")
+}

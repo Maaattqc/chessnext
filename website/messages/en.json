@@ -1,0 +1,49 @@
+{
+  "nav": {
+    "concepts": "Concepts",
+    "analysis": "Analysis",
+    "pricing": "Pricing",
+    "login": "Sign in",
+    "dashboard": "Dashboard",
+    "logout": "Sign out"
+  },
+  "hero": {
+    "title": "Chess concepts no human has ever taught",
+    "subtitle": "Extracted from Leela Chess Zero's neural network at 3600 Elo",
+    "cta": "Start learning for free"
+  },
+  "features": {
+    "concepts_title": "Superhuman Concepts",
+    "concepts_desc": "Patterns discovered in Leela's neural network that exist beyond human chess knowledge.",
+    "eval_title": "Human-Adjusted Evaluation",
+    "eval_desc": "The best move at YOUR rating, not the engine's 3600 Elo recommendation.",
+    "rootcause_title": "Root-Cause Analysis",
+    "rootcause_desc": "Find the real positional mistake, not just the tactical blunder."
+  },
+  "analysis": {
+    "title": "Analyze a position",
+    "placeholder": "Paste a FEN position...",
+    "submit": "Analyze",
+    "loading_stockfish": "Running Stockfish...",
+    "loading_leela": "Consulting Leela...",
+    "loading_coach": "Generating insights...",
+    "error_invalid_fen": "Invalid position"
+  },
+  "auth": {
+    "title": "Sign in to ChessNext",
+    "email_prompt": "Enter your email to receive a verification code.",
+    "code_prompt": "We sent a 6-digit code to {email}",
+    "send_code": "Send code",
+    "sending": "Sending...",
+    "verify": "Verify",
+    "verifying": "Verifying...",
+    "different_email": "Use a different email",
+    "error_invalid_code": "Invalid or expired code. Please try again."
+  },
+  "common": {
+    "free": "Free",
+    "plus": "Plus",
+    "pro": "Pro",
+    "coach": "Coach"
+  }
+}
