@@ -4,7 +4,7 @@
 
 - **Framework:** Next.js 15 (App Router) + TypeScript
 - **Styling:** Tailwind CSS + shadcn/ui components
-- **Auth:** NextAuth.js (email + Google providers)
+- **Auth:** NextAuth.js — magic link only (email with verification code, no password)
 - **Chess UI:** react-chessboard + chess.js
 - **Payments:** Stripe (checkout + subscriptions)
 - **Tests:** vitest
