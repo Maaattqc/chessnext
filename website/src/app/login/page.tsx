@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -65,45 +67,41 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[hsl(220,20%,8%)]">
-      <div className="w-full max-w-sm rounded-xl bg-[hsl(220,20%,12%)] p-8">
-        <h1 className="mb-2 text-2xl font-bold text-[hsl(210,20%,92%)]">
+    <div className="flex min-h-screen items-center justify-center bg-background">
+      <div className="w-full max-w-sm rounded-xl bg-card p-8 border border-border">
+        <h1 className="mb-2 text-2xl font-bold text-foreground">
           Sign in to ChessNext
         </h1>
-        <p className="mb-6 text-sm text-[hsl(215,15%,55%)]">
+        <p className="mb-6 text-sm text-muted-foreground">
           {step === "email"
             ? "Enter your email to receive a verification code."
             : `We sent a 6-digit code to ${email}`}
         </p>
 
         {error && (
-          <div className="mb-4 rounded-lg bg-red-500/10 px-4 py-2 text-sm text-red-400">
+          <div className="mb-4 rounded-lg bg-destructive/10 px-4 py-2 text-sm text-destructive">
             {error}
           </div>
         )}
 
         {step === "email" ? (
           <form onSubmit={handleSendCode}>
-            <input
+            <Input
               type="email"
               required
               placeholder="you@example.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="mb-4 w-full rounded-lg border border-[hsl(215,15%,25%)] bg-[hsl(220,20%,8%)] px-4 py-3 text-[hsl(210,20%,92%)] placeholder-[hsl(215,15%,40%)] focus:border-[hsl(160,70%,45%)] focus:outline-none"
+              className="mb-4"
               autoFocus
             />
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full rounded-lg bg-[hsl(160,70%,45%)] px-4 py-3 font-medium text-white transition hover:bg-[hsl(160,70%,38%)] disabled:opacity-50"
-            >
+            <Button type="submit" disabled={loading} className="w-full">
               {loading ? "Sending..." : "Send code"}
-            </button>
+            </Button>
           </form>
         ) : (
           <form onSubmit={handleVerifyCode}>
-            <input
+            <Input
               type="text"
               required
               inputMode="numeric"
@@ -112,16 +110,16 @@ export default function LoginPage() {
               placeholder="123456"
               value={code}
               onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
-              className="mb-4 w-full rounded-lg border border-[hsl(215,15%,25%)] bg-[hsl(220,20%,8%)] px-4 py-3 text-center text-2xl font-mono tracking-widest text-[hsl(210,20%,92%)] placeholder-[hsl(215,15%,40%)] focus:border-[hsl(160,70%,45%)] focus:outline-none"
+              className="mb-4 text-center text-2xl font-mono tracking-widest"
               autoFocus
             />
-            <button
+            <Button
               type="submit"
               disabled={loading || code.length !== 6}
-              className="mb-3 w-full rounded-lg bg-[hsl(160,70%,45%)] px-4 py-3 font-medium text-white transition hover:bg-[hsl(160,70%,38%)] disabled:opacity-50"
+              className="mb-3 w-full"
             >
               {loading ? "Verifying..." : "Verify"}
-            </button>
+            </Button>
             <button
               type="button"
               onClick={() => {
@@ -129,7 +127,7 @@ export default function LoginPage() {
                 setCode("");
                 setError("");
               }}
-              className="w-full text-sm text-[hsl(215,15%,55%)] hover:text-[hsl(210,20%,92%)]"
+              className="w-full text-sm text-muted-foreground hover:text-foreground"
             >
               Use a different email
             </button>

@@ -57,7 +57,7 @@ export default function AnalysisPage() {
                     borderRadius: "8px",
                     boxShadow: "0 4px 20px rgba(0, 0, 0, 0.3)",
                   },
-                  darkSquareStyle: { backgroundColor: "#437a5c" },
+                  darkSquareStyle: { backgroundColor: "#8B6914" },
                   lightSquareStyle: { backgroundColor: "#c4a86e" },
                   allowDragging: false,
                 }}

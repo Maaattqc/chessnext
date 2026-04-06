@@ -26,13 +26,13 @@ export function ConceptBoard({ positions }: { positions: Position[] }) {
     ? sideToMove === "white" ? "black" : "white"
     : sideToMove;
 
-  // Build arrows: green for strong, red for weak
+  // Build arrows: amber for strong, red for weak
   const arrows: { startSquare: string; endSquare: string; color: string }[] = [];
   if (pos.strongMove.length >= 4) {
     arrows.push({
       startSquare: pos.strongMove.slice(0, 2),
       endSquare: pos.strongMove.slice(2, 4),
-      color: "rgba(34, 181, 115, 0.7)",
+      color: "rgba(245, 158, 11, 0.8)",
     });
   }
   if (pos.weakMove.length >= 4 && pos.weakMove !== pos.strongMove) {
@@ -53,9 +53,9 @@ export function ConceptBoard({ positions }: { positions: Position[] }) {
             arrows,
             boardStyle: {
               borderRadius: "8px",
-              boxShadow: "0 4px 20px rgba(0, 0, 0, 0.3)",
+              boxShadow: "0 4px 20px rgba(0, 0, 0, 0.4)",
             },
-            darkSquareStyle: { backgroundColor: "#437a5c" },
+            darkSquareStyle: { backgroundColor: "#8B6914" },
             lightSquareStyle: { backgroundColor: "#c4a86e" },
             allowDragging: false,
           }}
@@ -92,7 +92,7 @@ export function ConceptBoard({ positions }: { positions: Position[] }) {
       <div className="mt-4 rounded-lg border border-border/40 bg-card p-4">
         <div className="flex gap-4 text-sm">
           <div>
-            <span className="font-mono text-green-400">Strong: </span>
+            <span className="font-mono text-amber-400">Strong: </span>
             <span className="font-mono">{pos.strongMove}</span>
           </div>
           <div>
