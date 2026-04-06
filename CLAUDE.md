@@ -13,6 +13,7 @@ Phase 0 completed April 6, 2026 — 4 superhuman concepts validated.
 - `docs/CONTEXT.md` — Project context, what Leela is, how concept extraction works
 - `docs/TECH.md` — Technical conventions, stack, libraries
 - `docs/SECURITY.md` — **MANDATORY** security rules. Read before writing any code.
+- `docs/TESTING.md` — Testing strategy: unit, integration, E2E, security tests
 - `docs/PHASE0_RESULTS.md` — Phase 0 results: 4 concepts, metrics, positions
 
 ## Repo
