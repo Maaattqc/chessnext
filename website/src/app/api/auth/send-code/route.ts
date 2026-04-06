@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { Resend } from "resend";
+import { authLimiter, rateLimit } from "@/lib/rate-limit";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -27,7 +28,17 @@ export async function POST(req: NextRequest) {
 
     const { email } = parsed.data;
 
-    // Rate limit: max 5 codes per email per 15 minutes
+    // Rate limit via Upstash (IP-based)
+    const ip = req.headers.get("x-forwarded-for")?.split(",")[0] || "unknown";
+    const { success } = await rateLimit(authLimiter, `auth:${ip}`);
+    if (!success) {
+      return NextResponse.json(
+        { error: { code: "RATE_LIMITED", message: "Too many attempts. Try again in 15 minutes.", status: 429 } },
+        { status: 429, headers: { "Retry-After": "900" } }
+      );
+    }
+
+    // DB-level rate limit: max 5 codes per email per 15 minutes
     const recentTokens = await prisma.verificationToken.count({
       where: {
         email,
@@ -38,7 +49,7 @@ export async function POST(req: NextRequest) {
     if (recentTokens >= 5) {
       return NextResponse.json(
         { error: { code: "RATE_LIMITED", message: "Too many attempts. Try again in 15 minutes.", status: 429 } },
-        { status: 429 }
+        { status: 429, headers: { "Retry-After": "900" } }
       );
     }
 

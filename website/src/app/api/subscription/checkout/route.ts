@@ -3,6 +3,7 @@ import { z } from "zod";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
 import { stripe, PLANS, PlanKey } from "@/lib/stripe";
+import { checkoutLimiter, rateLimit } from "@/lib/rate-limit";
 
 const schema = z.object({
   plan: z.enum(["plus", "pro", "coach"]),
@@ -15,6 +16,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         { error: { code: "UNAUTHORIZED", message: "Please sign in first.", status: 401 } },
         { status: 401 }
+      );
+    }
+
+    // Rate limit
+    const { success: allowed } = await rateLimit(checkoutLimiter, `checkout:${session.user.id}`);
+    if (!allowed) {
+      return NextResponse.json(
+        { error: { code: "RATE_LIMITED", message: "Too many requests. Try again in a minute.", status: 429 } },
+        { status: 429, headers: { "Retry-After": "60" } }
       );
     }
 
