@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Navbar } from "@/components/navbar";
+import { Footer } from "@/components/footer";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { BookOpen, BarChart3, Search } from "lucide-react";
@@ -67,6 +68,7 @@ export default function HomePage() {
           </div>
         </section>
       </main>
+      <Footer />
     </>
   );
 }

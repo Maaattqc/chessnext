@@ -1,8 +1,8 @@
-import Link from "next/link";
 import { Navbar } from "@/components/navbar";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Check } from "lucide-react";
+import { PricingButton } from "./pricing-button";
 
 const plans = [
   {
@@ -121,14 +121,13 @@ export default function PricingPage() {
                     </li>
                   ))}
                 </ul>
-                <Link href={plan.href} className="mt-6">
-                  <Button
-                    className="w-full"
-                    variant={plan.highlight ? "default" : "outline"}
-                  >
-                    {plan.cta}
-                  </Button>
-                </Link>
+                <div className="mt-6">
+                  <PricingButton
+                    plan={plan.name === "Free" ? null : plan.name.toLowerCase()}
+                    label={plan.cta}
+                    highlight={plan.highlight}
+                  />
+                </div>
               </CardContent>
             </Card>
           ))}
