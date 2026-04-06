@@ -9,10 +9,10 @@ Phase 0 completed April 6, 2026 — 4 superhuman concepts validated.
 
 ## Key Files
 
-- `PLAN.md` — Business plan, phases, pricing, architecture
-- `CONTEXT.md` — Project context, what Leela is, how concept extraction works
-- `TECH.md` — Technical conventions, stack, security rules
-- `tools/PHASE0_RESULTS.md` — Phase 0 results: 4 concepts, metrics, positions
+- `docs/PLAN.md` — Business plan, phases, pricing, architecture
+- `docs/CONTEXT.md` — Project context, what Leela is, how concept extraction works
+- `docs/TECH.md` — Technical conventions, stack, security rules
+- `docs/PHASE0_RESULTS.md` — Phase 0 results: 4 concepts, metrics, positions
 
 ## Repo
 
