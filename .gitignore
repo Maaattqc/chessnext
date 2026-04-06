@@ -1,0 +1,65 @@
+# === Dependencies ===
+node_modules/
+.venv/
+venv/
+env/
+.env
+.env.local
+.env.*.local
+
+# === Python ===
+__pycache__/
+*.py[cod]
+*.pyo
+*.egg-info/
+dist/
+build/
+*.egg
+.pytest_cache/
+.mypy_cache/
+
+# === Next.js ===
+.next/
+out/
+
+# === Lc0 networks & heavy data ===
+# Network weights (300+ MB each)
+tools/networks/
+*.pb.gz
+
+# Pipeline outputs (activations, concepts, etc.)
+*.npz
+tools/activations/
+tools/disagreements.npz
+tools/concepts.npz
+tools/filtered_concepts.npz
+tools/transformer_concepts.npz
+tools/activations_100pos.npz
+
+# Precomputed binary data
+tools/attn_policy_map.npy
+
+# === IDE / OS ===
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# === Secrets ===
+.env
+.env.local
+.env.production
+.env.development
+credentials.json
+*.pem
+*.key
+
+# === Misc ===
+*.log
+*.tmp
+*.bak
+*.docx
