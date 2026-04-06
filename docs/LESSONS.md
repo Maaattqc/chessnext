@@ -59,6 +59,18 @@ If you hit the same type of error 2+ times, add it here.
 - **Fix:** Run probes on PCA-reduced features (150-200 dims), use LBFGS solver
 - **Rule:** Always PCA first, then probe. Never fit sklearn on raw high-dim activations.
 
+### Never defer tests — write them alongside each feature
+- **Error:** Coded 13 routes and 5 pages without a single test file
+- **Symptom:** Zero test coverage, security rules half-applied, no confidence that code works
+- **Fix:** For every feature: write test first (or alongside), commit together. Never "tests later."
+- **Rule:** If a commit adds a route/component, it MUST include its test file. No exceptions.
+
+### Apply security rules as you code, not in a "security pass" later
+- **Error:** Built auth, Stripe, API routes without security headers, rate limiting, or Sentry
+- **Symptom:** Missing CSP, X-Frame-Options, HSTS. No Upstash rate limiting. No structured logging.
+- **Fix:** Every API route gets rate limiting + validation + error handling at creation time. Security headers go in proxy.ts on day one.
+- **Rule:** Check SECURITY.md before writing any endpoint. Not after.
+
 ---
 
 *Add new entries at the bottom of the relevant section. Date optional.*
