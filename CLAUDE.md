@@ -19,6 +19,7 @@ Phase 0 completed April 6, 2026 — 4 superhuman concepts validated.
 - `docs/PROMPTS.md` — Claude API prompt templates for AI coach features
 - `docs/DESIGN.md` — Design system (colors, typography, layout, components, board styling)
 - `docs/DEPLOYMENT.md` — Railway deployment, env vars, domain setup, first-time setup
+- `docs/LESSONS.md` — **READ FIRST.** Past errors and gotchas. Add new ones when you repeat a mistake.
 - `docs/PHASE0_RESULTS.md` — Phase 0 results: 4 concepts, metrics, positions
 
 ## Repo
