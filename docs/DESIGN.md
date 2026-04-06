@@ -11,42 +11,50 @@ specs to produce a consistent, professional UI.
 - **Feel:** Dark, focused, premium. Think Lichess dark mode meets Stripe's polish.
 - **Not:** Childish, gamified with badges everywhere, cluttered like Chess.com.
 
+## Color Rules
+
+- Dark mode by default, light mode toggle available
+- NO purple, NO green, NO blue — we differentiate from Lichess/Chess.com
+- Amber/gold accent to stand out from every chess platform
+
 ## Colors
 
-Built on shadcn/ui with custom chess-themed palette.
+Built on shadcn/ui with custom amber/gold-themed palette.
 
 ```
 Background:
-  --background:    hsl(220, 20%, 8%)      #111827  (near-black blue)
-  --card:          hsl(220, 20%, 12%)     #1a2332  (elevated surface)
-  --popover:       hsl(220, 20%, 14%)     #1e2a3a  (dropdowns, modals)
+  --background:    #0a0a0a             (pure dark)
+  --card:          #111111             (elevated surface)
+  --popover:       #171717             (dropdowns, modals)
+  --border:        #262626             (subtle borders)
 
 Foreground:
-  --foreground:    hsl(210, 20%, 92%)     #e5e9ef  (primary text)
-  --muted:         hsl(215, 15%, 55%)     #7d8a9a  (secondary text)
+  --foreground:    #F5F5F4             (off-white primary text)
+  --muted:         #a8a29e             (warm gray secondary text)
 
-Accent:
-  --primary:       hsl(160, 70%, 45%)     #22b573  (green — growth, learning)
-  --primary-hover: hsl(160, 70%, 38%)     #1a9660
-  --destructive:   hsl(0, 72%, 51%)       #dc2626  (errors, blunders)
+Accent (amber/gold):
+  --primary:       #F59E0B             (amber — main accent)
+  --primary-hover: #D97706             (darker amber on hover)
+  --primary-light: #FBBF24             (lighter gold for highlights)
+  --destructive:   #dc2626             (red — errors, blunders only)
 
 Chess-specific:
-  --eval-winning:  hsl(160, 70%, 45%)     #22b573  (green — winning)
-  --eval-equal:    hsl(215, 15%, 55%)     #7d8a9a  (gray — equal)
-  --eval-losing:   hsl(0, 72%, 51%)       #dc2626  (red — losing)
-  --concept-new:   hsl(45, 90%, 55%)      #e5a820  (gold — new concept unlocked)
+  --eval-winning:  #F59E0B             (amber — winning)
+  --eval-equal:    #a8a29e             (warm gray — equal)
+  --eval-losing:   #dc2626             (red — losing)
+  --concept-new:   #FBBF24             (bright gold — new concept unlocked)
 
-Board:
-  --board-light:   hsl(35, 30%, 75%)      #c4a86e  (warm light square)
-  --board-dark:    hsl(150, 25%, 35%)     #437a5c  (forest green dark square)
-  --board-highlight: hsla(55, 90%, 60%, 0.4)       (yellow move highlight)
-  --board-arrow:   hsla(160, 70%, 45%, 0.7)        (green concept arrow)
+Board (default — customizable by user):
+  --board-light:   #c4a86e             (warm light square)
+  --board-dark:    #8B6914             (dark gold square)
+  --board-highlight: rgba(251, 191, 36, 0.4)  (gold move highlight)
+  --board-arrow:   rgba(245, 158, 11, 0.7)    (amber concept arrow)
 
 Light mode overrides (via next-themes):
-  --background:    hsl(0, 0%, 98%)
-  --card:          hsl(0, 0%, 100%)
-  --foreground:    hsl(220, 20%, 12%)
-  --muted:         hsl(215, 15%, 45%)
+  --background:    #fafaf9
+  --card:          #ffffff
+  --foreground:    #1c1917
+  --muted:         #78716c
 ```
 
 ## Typography
