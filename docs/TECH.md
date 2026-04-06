@@ -55,6 +55,11 @@
 - Parameterized SQL everywhere, never string concatenation
 - HTTPS only in production
 
+## Later (Phase 2+)
+
+- **File storage:** Cloudflare R2 or S3 — for chess diagrams, PGN exports, PDF reports
+- **Job queue:** BullMQ (via Upstash Redis) — async analysis pipeline (Stockfish + Leela + Claude = 10-20s, needs background processing)
+
 ## Code Rules
 
 - Tests for every feature
