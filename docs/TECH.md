@@ -19,11 +19,27 @@
 - **Tests:** pytest
 - **ORM:** SQLAlchemy (PostgreSQL)
 
+## Email
+
+- **Provider:** Resend (free tier: 3K emails/month)
+- **Templates:** React Email (emails built as React components)
+- **Usage:** Magic link auth codes, analysis notifications
+
 ## Database
 
 - **Provider:** Railway PostgreSQL
 - **Access:** Prisma from website, SQLAlchemy from chess-engine
 - **Shared via:** `DATABASE_URL` environment variable
+
+## Cache & Rate Limiting
+
+- **Provider:** Upstash Redis (serverless, free tier: 10K commands/day)
+- **Usage:** Rate limiting on public endpoints, API response caching, session store
+
+## Monitoring
+
+- **Errors:** Sentry (error tracking, performance traces, alerts)
+- **Analytics:** PostHog (funnels, retention, feature flags, free tier: 1M events/month)
 
 ## Security
 
