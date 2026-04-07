@@ -59,12 +59,19 @@ If you hit the same type of error 2+ times, add it here.
 - **Fix:** Run probes on PCA-reduced features (150-200 dims), use LBFGS solver
 - **Rule:** Always PCA first, then probe. Never fit sklearn on raw high-dim activations.
 
-### Transformer policy head produces garbage — all moves point to a8
-- **Error:** The Lc0 transformer loader produces policy outputs where every square has high affinity for square 56 (a8). Legal opening moves (e4, d4, Nf3) have negative logits. 94.5% "disagreement" rate between two networks = both are broken.
-- **Root cause:** NOT weight loading (verified: non-square matrices prove convention is correct). The forward pass has a bug — likely in DeepNorm alpha, Smolgen attention biases, or encoder layer norm ordering. Needs line-by-line comparison with lc0 C++ source.
-- **Impact:** ALL concept extraction results are invalid. The 4 concepts from Phase 0 were extracted from garbage policy outputs.
-- **Status:** OPEN. Need to debug by comparing intermediate activations with a reference implementation (lc0 binary or ONNX export).
-- **Rule:** Always validate a neural network loader by checking that known positions produce known-good outputs BEFORE running any pipeline on top of it.
+### Transformer policy head produced garbage — Smolgen weight transpose + wrong activation
+- **Error:** Policy outputs all pointed to square a8. Legal moves had negative logits. 94.5% "disagreement" rate = both networks broken.
+- **Root cause 1:** Smolgen global weight loaded as reshape(gen_sz, 4096) but Lc0 stores it as (4096, gen_sz). Fix: reshape(4096, gen_sz).T
+- **Root cause 2:** Smolgen uses SWISH activation (x*sigmoid(x)), not MISH. Network format protobuf specifies smolgen_activation=7=SWISH.
+- **Impact:** ALL Phase 0 v1 concept results were invalid (4 "concepts" were noise). Fixed in v2.
+- **Fix:** Downloaded lc0 binary, compared outputs, found the 2 bugs. Now matches lc0 exactly (d4=10.92%, Nf3=10.90% for starting position).
+- **Rule:** ALWAYS validate a neural network loader by checking that known positions produce known-good outputs BEFORE running any pipeline.
+
+### Random positions produce garbage concepts
+- **Error:** Phase 0 v1 used random play positions. A queen was left hanging on c5 with bxc5 available, and both "concept moves" (Nf3, b3) ignored it.
+- **Root cause:** Random play produces tactically absurd positions. Networks produce noise on these positions. Clustering noise = fake concepts.
+- **Fix:** Use positions from real Lichess games + quiet position filter (no free captures of pieces >= 3 pawns).
+- **Rule:** ALWAYS use positions from real games for concept extraction. Filter for tactical quietness.
 
 ### Never defer tests — write them alongside each feature
 - **Error:** Coded 13 routes and 5 pages without a single test file
