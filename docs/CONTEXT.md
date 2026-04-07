@@ -39,21 +39,31 @@ stronger than AlphaZero, transformer-based since 2022).
 - **Claude Code** builds 99% of the code
 
 ## Current phase
-Phase 1: Build the App.
-Phase 0 completed successfully (April 6, 2026): 4 superhuman concepts
-extracted from Lc0 transformer (15x1024 BT4, 69 Elo gap, 287 disagreements
-from 10K positions). See tools/PHASE0_RESULTS.md for full results.
-Now scaling to 30-50 concepts and building the web app + API.
+Phase 1: Build the App (~90% complete as of April 6, 2026).
+
+Phase 0 completed: 4 superhuman concepts extracted from Lc0 transformer
+(15x1024 BT4, 69 Elo gap, 287 disagreements from 10K positions).
+See docs/PHASE0_RESULTS.md for full results.
+
+App is deployed and functional:
+- Website: Next.js 16 on Railway (22 routes, auth, Stripe, interactive board)
+- Chess-engine: FastAPI on Railway (real Stockfish 18 + Claude API coach)
+- Database: Railway PostgreSQL (8 tables, 4 concepts seeded)
+- 55 tests passing (37 vitest + 18 pytest), 0 vulnerabilities
+
+Remaining for Phase 1: scale to 30-50 concepts (50K positions ready),
+wire real game analysis (currently mock), Stripe products when ready to sell.
 
 ## Repo structure
 ```
-chessnext-ai/
-  website/        Next.js app (pages, auth, UI, Stripe, chessboard)
-  chess-engine/   Python FastAPI (Stockfish, Leela via RunPod, Claude API coach)
-  tools/          Offline scripts for concept extraction (not deployed)
-  PLAN.md         Full execution plan
-  CONTEXT.md      This file
+chessnext/
+  website/        Next.js 16 + React 19 + Tailwind 4 + shadcn/ui
+  chess-engine/   Python FastAPI + Stockfish 18 + Claude API
+  tools/          Offline concept extraction (Lc0 transformer pipeline)
+  docs/           All specs (PLAN, API, DATABASE, SECURITY, DESIGN, etc.)
+  CLAUDE.md       Entry point for Claude Code
 ```
 
-## Domain
-chessnext.ai
+## Deployed at
+- Website: https://website-production-7ee4.up.railway.app
+- Domain: chessnext.ai (to be configured)

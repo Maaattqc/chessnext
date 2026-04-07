@@ -59,14 +59,19 @@ NEXTAUTH_SECRET=xxx
 5. ✓ Filtered by teachability + novelty
 6. **GO: 4 clean superhuman concepts. $0 spent. See tools/PHASE0_RESULTS.md**
 
-### Phase 1: Build the App (Weeks 7-18) — $800 to $2,000
-- Scale to 30-50 concepts
-- Next.js website with Claude Code (auth, chessboard, Stripe, dashboards)
-- FastAPI chess-engine (Stockfish, RunPod Leela, Claude API coach)
-- Human-adjusted eval + root-cause analysis
-- Deploy on Railway from GitHub
+### Phase 1: Build the App (Weeks 7-18) — $800 to $2,000 ⏳ ~90% Apr 6, 2026
+1. ⚠️ Scale to 30-50 concepts (4 done, 50K positions generated, pipeline ready)
+2. ✓ Next.js website: auth (magic link), chessboard (Learn/Practice tabs),
+   Stripe (checkout + webhooks + cancel + plan locking),
+   dashboards (stats, progress, history, settings)
+3. ✓ FastAPI chess-engine: real Stockfish 18 + Claude API Sonnet coach
+4. ✓ Human-adjusted eval: route + Claude prompt connected
+5. ⚠️ Root-cause game analysis: route + PGN page built, results still mock
+6. ✓ Deploy on Railway: website + chess-engine + PostgreSQL, master = prod
+7. Remaining: scale concepts (run pipeline on 50K), wire real game analysis,
+   RunPod Leela for prod (Phase 2), Stripe products when ready to sell
 
-### Phase 2: Launch and Grow (Week 18+)
+### Phase 2: Launch and Grow (Week 18+) — NOT STARTED
 - Weekly free concept blog posts (viral content)
 - Chess YouTuber outreach (GothamChess, Naroditsky)
 - Product Hunt launch
