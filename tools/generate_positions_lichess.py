@@ -37,8 +37,9 @@ TOOLS = os.path.dirname(os.path.abspath(__file__))
 OUTPUT_PATH = os.path.join(TOOLS, "positions_50k.npz")
 TARGET_POSITIONS = 50_000
 
-# Moves at which to sample positions from each game
-SAMPLE_PLIES = [20, 30, 40, 50, 60, 70, 80]  # = moves 10, 15, 20, 25, 30, 35, 40
+# Plies at which to sample positions from each game.
+# Mix of even (white to move) and odd (black to move) for balanced coverage.
+SAMPLE_PLIES = [19, 20, 29, 30, 39, 40, 49, 50, 59, 60, 69, 70, 79, 80]
 
 # Minimum requirements for a position to be included
 MIN_LEGAL_MOVES = 4
