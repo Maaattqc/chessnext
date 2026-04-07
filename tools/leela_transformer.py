@@ -43,6 +43,10 @@ def mish(x):
     return x * torch.tanh(F.softplus(x))
 
 
+def swish(x):
+    return x * torch.sigmoid(x)
+
+
 # ---------------------------------------------------------------------------
 # Modules
 # ---------------------------------------------------------------------------
@@ -50,10 +54,11 @@ def mish(x):
 class Smolgen(nn.Module):
     """Generates per-head attention biases from encoder input."""
 
-    def __init__(self, embed, heads, hidden_ch, gen_sz):
+    def __init__(self, embed, heads, hidden_ch, gen_sz, smolgen_act=swish):
         super().__init__()
         self.heads = heads
         self.gen_sz = gen_sz
+        self.act = smolgen_act
         self.compress = nn.Linear(embed, hidden_ch, bias=False)  # 1024->32
         self.dense1 = nn.Linear(64 * hidden_ch, 256)             # 2048->256
         self.ln1 = nn.LayerNorm(256, eps=1e-3)
@@ -66,9 +71,9 @@ class Smolgen(nn.Module):
         # x: (B*64, embed)
         c = self.compress(x)                          # (B*64, hidden_ch)
         c = c.reshape(B, -1)                          # (B, 64*hidden_ch)
-        h = mish(self.dense1(c))                      # (B, 256)
+        h = self.act(self.dense1(c))                  # (B, 256)
         h = self.ln1(h)
-        g = mish(self.dense2(h))                      # (B, heads*gen_sz)
+        g = self.act(self.dense2(h))                  # (B, heads*gen_sz)
         g = self.ln2(g)
         g = g.reshape(B, self.heads, self.gen_sz)     # (B, heads, gen_sz)
         out = g @ self.global_w                       # (B, heads, 4096)
@@ -76,7 +81,8 @@ class Smolgen(nn.Module):
 
 
 class EncoderLayer(nn.Module):
-    def __init__(self, embed, heads, ffn_dim, alpha, smol_hidden, smol_gen_sz):
+    def __init__(self, embed, heads, ffn_dim, alpha, smol_hidden, smol_gen_sz,
+                 smolgen_act=swish):
         super().__init__()
         self.embed = embed
         self.heads = heads
@@ -96,7 +102,8 @@ class EncoderLayer(nn.Module):
         self.ln2 = nn.LayerNorm(embed, eps=1e-3)
 
         # Smolgen
-        self.smolgen = Smolgen(embed, heads, smol_hidden, smol_gen_sz)
+        self.smolgen = Smolgen(embed, heads, smol_hidden, smol_gen_sz,
+                               smolgen_act=smolgen_act)
 
     def forward(self, x, B):
         # x: (B*64, embed)
@@ -131,7 +138,8 @@ class EncoderLayer(nn.Module):
 
 class LeelaTransformer(nn.Module):
     def __init__(self, n_enc, embed, heads, ffn_dim,
-                 smol_hidden, smol_gen_sz, emb_dense_sz):
+                 smol_hidden, smol_gen_sz, emb_dense_sz,
+                 smolgen_act=swish):
         super().__init__()
         self.n_enc = n_enc
         self.embed = embed
@@ -155,7 +163,8 @@ class LeelaTransformer(nn.Module):
 
         # Encoder
         self.encoders = nn.ModuleList([
-            EncoderLayer(embed, heads, ffn_dim, alpha, smol_hidden, smol_gen_sz)
+            EncoderLayer(embed, heads, ffn_dim, alpha, smol_hidden, smol_gen_sz,
+                         smolgen_act=smolgen_act)
             for _ in range(n_enc)
         ])
 
@@ -297,12 +306,23 @@ def load_transformer(path):
     preproc_b_sz = len(np.frombuffer(w.ip_emb_preproc_b.params, np.uint16))
     emb_dense_sz = preproc_b_sz // 64
 
+    # Determine activation functions from network format
+    _ACT_MAP = {0: None, 1: mish, 2: F.relu, 3: None, 4: torch.tanh,
+                5: torch.sigmoid, 6: F.selu, 7: swish}
+    default_act = mish if fmt.default_activation == 1 else F.relu
+    smol_act_id = fmt.smolgen_activation
+    smolgen_act = _ACT_MAP.get(smol_act_id, default_act) or default_act
+    ffn_act_id = fmt.ffn_activation
+    ffn_act = _ACT_MAP.get(ffn_act_id, default_act) or default_act
+
     print(f"  Transformer: {n_enc}x{embed}, {heads} heads, FFN={ffn_dim}")
-    print(f"  Smolgen: hidden={smol_hidden}, gen_sz={smol_gen_sz}")
+    print(f"  Smolgen: hidden={smol_hidden}, gen_sz={smol_gen_sz}, act={smolgen_act.__name__}")
+    print(f"  FFN act: {ffn_act.__name__}, default act: {default_act.__name__}")
     print(f"  Emb dense: {emb_dense_sz}")
 
     model = LeelaTransformer(
-        n_enc, embed, heads, ffn_dim, smol_hidden, smol_gen_sz, emb_dense_sz)
+        n_enc, embed, heads, ffn_dim, smol_hidden, smol_gen_sz, emb_dense_sz,
+        smolgen_act=smolgen_act)
 
     # --- Input embedding ---
     _load_linear(model.preproc, w.ip_emb_preproc_w, w.ip_emb_preproc_b)
@@ -320,8 +340,8 @@ def load_transformer(path):
     _load_linear(model.emb_ffn2, w.ip_emb_ffn.dense2_w, w.ip_emb_ffn.dense2_b)
     _load_ln(model.emb_ffn_ln, w.ip_emb_ffn_ln_gammas, w.ip_emb_ffn_ln_betas)
 
-    # Global smolgen weight
-    smol_w = _decode(w.smolgen_w).reshape(smol_gen_sz, 4096)
+    # Global smolgen weight (stored as (4096, gen_sz) in Lc0, transposed for matmul)
+    smol_w = _decode(w.smolgen_w).reshape(4096, smol_gen_sz).T.copy()
     model.smolgen_w.data = torch.from_numpy(smol_w)
 
     # --- Encoder layers ---
