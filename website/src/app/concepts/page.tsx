@@ -1,8 +1,15 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { Navbar } from "@/components/navbar";
+import { Footer } from "@/components/footer";
 import { prisma } from "@/lib/db";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+
+export const metadata: Metadata = {
+  title: "Superhuman Chess Concepts — ChessNext.ai",
+  description: "Learn chess patterns extracted from Leela Chess Zero that no human coach has ever taught.",
+};
 import { BookOpen, Lock } from "lucide-react";
 
 const difficultyColor = {
@@ -63,6 +70,7 @@ export default async function ConceptsPage() {
           ))}
         </div>
       </main>
+      <Footer />
     </>
   );
 }

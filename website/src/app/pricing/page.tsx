@@ -1,8 +1,15 @@
+import type { Metadata } from "next";
 import { Navbar } from "@/components/navbar";
+import { Footer } from "@/components/footer";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Check } from "lucide-react";
 import { PricingButton } from "./pricing-button";
+
+export const metadata: Metadata = {
+  title: "Pricing — ChessNext.ai",
+  description: "Start free. Learn superhuman chess concepts from Leela Chess Zero. Upgrade for full access.",
+};
 
 const plans = [
   {
@@ -139,6 +146,7 @@ export default function PricingPage() {
           Break-even: 8-12 users on Plus.
         </p>
       </main>
+      <Footer />
     </>
   );
 }
