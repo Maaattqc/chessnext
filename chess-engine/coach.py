@@ -1,47 +1,89 @@
 """
 Claude-powered coaching narrative generator.
 
-Currently returns a template string.  Will be replaced with a real
-Anthropic API call once the integration is wired up.
+Uses the Anthropic SDK to produce human-readable coaching narratives
+from raw engine analysis.  Falls back to deterministic templates when
+the API key is missing or the API is unreachable.
 """
 
 from __future__ import annotations
 
+import json
+import logging
+import os
 from typing import Any
 
+from anthropic import Anthropic
 
-def generate_narrative(
+logger = logging.getLogger(__name__)
+
+# ---------------------------------------------------------------------------
+# Client initialisation (lazy — None when key is absent)
+# ---------------------------------------------------------------------------
+
+_client: Anthropic | None = None
+
+
+def _get_client() -> Anthropic | None:
+    """Return a cached Anthropic client, or None if the key is not set."""
+    global _client
+    if _client is not None:
+        return _client
+    api_key = os.getenv("CLAUDE_API_KEY", "")
+    if not api_key:
+        return None
+    _client = Anthropic(api_key=api_key)
+    return _client
+
+
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
+
+def _rating_label(user_rating: int) -> str:
+    """Map a numeric rating to a human-readable band."""
+    if user_rating < 1000:
+        return "beginner"
+    if user_rating <= 1800:
+        return "intermediate"
+    return "advanced"
+
+
+def _side_to_move(fen: str) -> str:
+    """Extract the side-to-move token from a FEN string."""
+    parts = fen.split()
+    if len(parts) >= 2 and parts[1] == "b":
+        return "Black"
+    return "White"
+
+
+def _format_eval(evaluation: dict[str, Any]) -> str:
+    """Produce a short human-readable eval string like '+1.2' or 'M3'."""
+    eval_info = evaluation.get("eval", {})
+    eval_type = eval_info.get("type", "cp")
+    eval_value = eval_info.get("value", 0)
+    if eval_type == "mate":
+        return f"M{eval_value}"
+    return f"{eval_value / 100:+.2f}"
+
+
+# ---------------------------------------------------------------------------
+# Fallback (template) generators — used when Claude is unavailable
+# ---------------------------------------------------------------------------
+
+def _fallback_narrative(
     fen: str,
     evaluation: dict[str, Any],
     user_rating: int,
     concepts: list[str],
 ) -> str:
-    """Produce a short coaching narrative for the given position.
-
-    Parameters
-    ----------
-    fen:
-        The FEN of the position being analysed.
-    evaluation:
-        Output of ``analyze_position`` (eval, bestMove, etc.).
-    user_rating:
-        The player's current rating — used to calibrate language complexity.
-    concepts:
-        Strategic/tactical concepts identified in the position.
-
-    Returns
-    -------
-    str
-        A plain-text coaching paragraph.  Eventually this will come from
-        Claude; for now it is a deterministic template.
-    """
+    """Deterministic template narrative (no API needed)."""
     eval_info = evaluation.get("eval", {})
     eval_type = eval_info.get("type", "cp")
     eval_value = eval_info.get("value", 0)
     best_move = evaluation.get("bestMove", "unknown")
     source = evaluation.get("source", "unknown")
 
-    # Human-readable evaluation summary.
     if eval_type == "mate":
         if eval_value > 0:
             eval_text = f"White has a forced mate in {eval_value}."
@@ -62,7 +104,6 @@ def generate_narrative(
         else "No specific tactical or strategic themes flagged yet."
     )
 
-    # Adjust tone based on rating band.
     if user_rating < 1000:
         tone = "Let's keep it simple."
     elif user_rating < 1600:
@@ -76,3 +117,215 @@ def generate_narrative(
         f"{concepts_text} "
         f"(analysis source: {source})"
     )
+
+
+def _fallback_human_move(
+    evaluation: dict[str, Any],
+    top_moves: list[dict[str, Any]] | None,
+) -> dict[str, str]:
+    """Return the engine's top move with a generic explanation."""
+    best = evaluation.get("bestMove", "unknown")
+    return {
+        "move": best,
+        "explanation": (
+            "AI coach temporarily unavailable. This is the engine's top choice."
+        ),
+    }
+
+
+# ---------------------------------------------------------------------------
+# Public API — Position Analysis narrative
+# ---------------------------------------------------------------------------
+
+def generate_narrative(
+    fen: str,
+    evaluation: dict[str, Any],
+    user_rating: int,
+    concepts: list[str],
+) -> str:
+    """Produce a short coaching narrative for the given position.
+
+    Parameters
+    ----------
+    fen:
+        The FEN of the position being analysed.
+    evaluation:
+        Output of ``analyze_position`` (eval, bestMove, bestLine, depth, source).
+    user_rating:
+        The player's current rating -- used to calibrate language complexity.
+    concepts:
+        Strategic/tactical concepts identified in the position.
+
+    Returns
+    -------
+    str
+        A plain-text coaching paragraph generated by Claude, or a
+        deterministic fallback if the API is unavailable.
+    """
+    client = _get_client()
+    if client is None:
+        return _fallback_narrative(fen, evaluation, user_rating, concepts)
+
+    side = _side_to_move(fen)
+    eval_str = _format_eval(evaluation)
+    best_move = evaluation.get("bestMove", "unknown")
+    best_line = " ".join(evaluation.get("bestLine", []))
+    depth = evaluation.get("depth", "?")
+    concepts_text = ", ".join(concepts) if concepts else "none identified"
+
+    system_prompt = (
+        f"You are a chess coach analyzing a position for a {user_rating} Elo player.\n"
+        "Adapt your language to their level:\n"
+        "- Below 1000: very basic, focus on material and immediate threats\n"
+        "- 1000-1400: mention piece activity and simple plans\n"
+        "- 1400-1800: discuss positional ideas, pawn structure, piece coordination\n"
+        "- 1800+: nuanced strategic discussion, prophylaxis, long-term plans\n\n"
+        "Be concise. 2-3 short paragraphs maximum. Lead with the most important\n"
+        "insight, not a summary of what's on the board.\n\n"
+        "Never say \"the engine says\" or mention evaluation numbers directly.\n"
+        "Frame everything as chess understanding."
+    )
+
+    user_message = (
+        f"Position (FEN): {fen}\n"
+        f"Side to move: {side}\n"
+        f"Stockfish evaluation: {eval_str} (depth {depth})\n"
+        f"Best move: {best_move}\n"
+        f"Best line: {best_line}\n"
+        f"Relevant concepts found: {concepts_text}\n\n"
+        f"The player's rating is {user_rating}.\n\n"
+        "Provide:\n"
+        f"1. What's the key idea in this position? (1-2 sentences)\n"
+        f"2. What should {side} play and why? (adapted to their level)\n"
+        "3. If concepts are relevant, briefly mention which pattern applies."
+    )
+
+    try:
+        response = client.messages.create(
+            model="claude-sonnet-4-6",
+            max_tokens=500,
+            temperature=0.3,
+            system=system_prompt,
+            messages=[{"role": "user", "content": user_message}],
+        )
+        # Extract the text from the first content block.
+        text = response.content[0].text
+        return text.strip()
+    except Exception:
+        logger.exception("Claude API call failed for generate_narrative")
+        return _fallback_narrative(fen, evaluation, user_rating, concepts)
+
+
+# ---------------------------------------------------------------------------
+# Public API — Human-Adjusted Move Recommendation
+# ---------------------------------------------------------------------------
+
+def generate_human_move(
+    fen: str,
+    evaluation: dict[str, Any],
+    user_rating: int,
+    top_moves: list[dict[str, Any]] | None = None,
+) -> dict[str, str]:
+    """Recommend the best move *for this human player*, not the engine's top pick.
+
+    Parameters
+    ----------
+    fen:
+        The FEN of the position.
+    evaluation:
+        Output of ``analyze_position``.
+    user_rating:
+        The player's current rating.
+    top_moves:
+        Optional list of engine-ranked moves, each a dict with at least
+        ``move`` and ``eval`` keys (e.g. ``[{"move": "e2e4", "eval": "+0.3"}, ...]``).
+        When absent the function uses only ``evaluation["bestMove"]``.
+
+    Returns
+    -------
+    dict
+        ``{"move": "<uci>", "explanation": "..."}``
+    """
+    client = _get_client()
+    if client is None:
+        return _fallback_human_move(evaluation, top_moves)
+
+    best_move = evaluation.get("bestMove", "unknown")
+    eval_str = _format_eval(evaluation)
+
+    # Build the top-5 list for the prompt.
+    if top_moves:
+        top_5_text = "\n".join(
+            f"  {i+1}. {m.get('move', '?')} (eval {m.get('eval', '?')})"
+            for i, m in enumerate(top_moves[:5])
+        )
+    else:
+        # Only the best move is known.
+        top_5_text = f"  1. {best_move} (eval {eval_str})"
+
+    system_prompt = (
+        "You are a chess coach who understands that the objectively best move\n"
+        "is often NOT the best move for a human player at a specific level.\n\n"
+        "A 1200-rated player should not play a move that requires 15 moves of\n"
+        "precise calculation to work. They should play a move that:\n"
+        "- Is strategically sound\n"
+        "- Doesn't require deep calculation\n"
+        "- Is hard to go wrong with\n"
+        "- Teaches good habits"
+    )
+
+    user_message = (
+        f"Position (FEN): {fen}\n"
+        f"Player rating: {user_rating}\n"
+        f"Stockfish best move: {best_move} (eval {eval_str})\n"
+        f"Stockfish top 5 moves:\n{top_5_text}\n\n"
+        f"Which move should a {user_rating}-rated player play in this position?\n"
+        "It can be the engine's top choice or a different move from the top 5.\n"
+        "Explain in 2-3 sentences why this move is best FOR THIS PLAYER.\n"
+        'Format: {"move": "<move>", "explanation": "..."}'
+    )
+
+    try:
+        response = client.messages.create(
+            model="claude-sonnet-4-6",
+            max_tokens=500,
+            temperature=0.3,
+            system=system_prompt,
+            messages=[{"role": "user", "content": user_message}],
+        )
+        text = response.content[0].text.strip()
+
+        # Parse the JSON from the response.  Claude may wrap it in markdown
+        # fences or add surrounding prose, so we try to extract the JSON object.
+        result = _extract_json(text)
+        if result and "move" in result and "explanation" in result:
+            return {"move": str(result["move"]), "explanation": str(result["explanation"])}
+
+        # If parsing fails but we got text, return best move with the raw text
+        # as explanation.
+        logger.warning("Could not parse JSON from generate_human_move response")
+        return {"move": best_move, "explanation": text}
+
+    except Exception:
+        logger.exception("Claude API call failed for generate_human_move")
+        return _fallback_human_move(evaluation, top_moves)
+
+
+def _extract_json(text: str) -> dict[str, Any] | None:
+    """Best-effort extraction of a JSON object from Claude's response text."""
+    # Try the raw text first.
+    try:
+        return json.loads(text)
+    except (json.JSONDecodeError, TypeError):
+        pass
+
+    # Look for a JSON block between curly braces.
+    start = text.find("{")
+    end = text.rfind("}")
+    if start != -1 and end != -1 and end > start:
+        try:
+            return json.loads(text[start : end + 1])
+        except (json.JSONDecodeError, TypeError):
+            pass
+
+    return None

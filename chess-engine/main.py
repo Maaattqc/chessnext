@@ -17,7 +17,7 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
 from analysis import analyze_position, validate_fen
-from coach import generate_narrative
+from coach import generate_narrative, generate_human_move
 
 # ---------------------------------------------------------------------------
 # Bootstrap
@@ -196,6 +196,37 @@ async def internal_analyze(
         concepts=concepts,
         coachNarrative=narrative,
     )
+
+
+class HumanMoveRequest(BaseModel):
+    fen: str = Field(..., max_length=100)
+    userRating: int = Field(..., ge=0, le=4000)
+    engineBestMove: str = Field(..., max_length=10)
+    engineTopMoves: list[dict[str, Any]] = Field(default_factory=list)
+
+
+@app.post("/internal/human-move")
+async def internal_human_move(
+    body: HumanMoveRequest,
+    x_internal_key: str = Header(..., alias="X-Internal-Key"),
+) -> dict[str, Any]:
+    """Return the best move adjusted for the player's rating level."""
+
+    if not INTERNAL_KEY or x_internal_key != INTERNAL_KEY:
+        raise HTTPException(status_code=401, detail="Invalid internal key.")
+
+    try:
+        validate_fen(body.fen)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+
+    result = generate_human_move(
+        fen=body.fen,
+        evaluation={"bestMove": body.engineBestMove},
+        user_rating=body.userRating,
+        top_moves=body.engineTopMoves,
+    )
+    return result
 
 
 # ---------------------------------------------------------------------------

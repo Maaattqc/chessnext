@@ -8,9 +8,22 @@ so the service can run without a local engine binary.
 from __future__ import annotations
 
 import os
+import pathlib
 from typing import Any
 
 import chess
+import chess.engine
+
+# ---------------------------------------------------------------------------
+# Stockfish path resolution
+# ---------------------------------------------------------------------------
+
+# 1. Honour the STOCKFISH_PATH env var if set.
+# 2. Otherwise fall back to ./bin/stockfish.exe next to this file.
+_DEFAULT_STOCKFISH = str(
+    pathlib.Path(__file__).resolve().parent / "bin" / "stockfish.exe"
+)
+STOCKFISH_PATH: str = os.getenv("STOCKFISH_PATH", _DEFAULT_STOCKFISH)
 
 # ---------------------------------------------------------------------------
 # FEN validation
@@ -45,25 +58,26 @@ def validate_fen(fen: str) -> chess.Board:
 # Stockfish wrapper (best-effort)
 # ---------------------------------------------------------------------------
 
+_ANALYSIS_TIMEOUT = 10  # seconds – hard cap per analysis call
+
+
 def _stockfish_analysis(fen: str, depth: int) -> dict[str, Any] | None:
     """Try to analyse with Stockfish. Returns ``None`` when unavailable."""
-    try:
-        import chess.engine  # noqa: F811 — intentional lazy import
-    except ImportError:
-        return None
 
-    stockfish_path = os.getenv("STOCKFISH_PATH", "")
-    if not stockfish_path:
+    if not STOCKFISH_PATH or not os.path.isfile(STOCKFISH_PATH):
         return None
 
     try:
-        engine = chess.engine.SimpleEngine.popen_uci(stockfish_path)
+        engine = chess.engine.SimpleEngine.popen_uci(STOCKFISH_PATH)
     except (FileNotFoundError, OSError, chess.engine.EngineTerminatedError):
         return None
 
     try:
         board = chess.Board(fen)
-        info = engine.analyse(board, chess.engine.Limit(depth=depth))
+        info = engine.analyse(
+            board,
+            chess.engine.Limit(depth=depth, time=_ANALYSIS_TIMEOUT),
+        )
 
         score = info.get("score")
         pv = info.get("pv", [])
@@ -79,15 +93,17 @@ def _stockfish_analysis(fen: str, depth: int) -> dict[str, Any] | None:
             eval_result = {"type": "cp", "value": 0}
 
         best_move = str(pv[0]) if pv else None
-        best_line = [str(m) for m in pv[:5]]
+        best_line = [str(m) for m in pv]
 
         return {
             "eval": eval_result,
             "bestMove": best_move,
             "bestLine": best_line,
-            "depth": depth,
+            "depth": info.get("depth", depth),
             "source": "stockfish",
         }
+    except chess.engine.EngineTerminatedError:
+        return None
     finally:
         engine.quit()
 
