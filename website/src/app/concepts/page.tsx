@@ -6,6 +6,8 @@ import { prisma } from "@/lib/db";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Superhuman Chess Concepts — ChessNext.ai",
   description: "Learn chess patterns extracted from Leela Chess Zero that no human coach has ever taught.",
