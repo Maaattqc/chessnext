@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import type { Prisma } from "@/generated/prisma/client";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
 import { validatePgn } from "@/lib/validate-pgn";
@@ -103,7 +104,7 @@ export async function POST(req: NextRequest) {
           type: "game",
           pgn: parsed.data.pgn,
           userColor,
-          result: analysisResult,
+          result: analysisResult as unknown as Prisma.InputJsonValue,
         },
       }),
       prisma.dailyUsage.upsert({

@@ -4,6 +4,7 @@ import { useState, useCallback } from "react";
 import { Chessboard } from "react-chessboard";
 import { Button } from "@/components/ui/button";
 import { ChevronRight, Check, X, RotateCcw } from "lucide-react";
+import { uciToSan } from "@/lib/chess-notation";
 
 interface Position {
   id: string;
@@ -181,7 +182,7 @@ export function ConceptPractice({
               {result.correct ? "Correct!" : "Not quite."}
             </span>
             <span className="ml-auto font-mono text-sm text-muted-foreground">
-              Best: {result.strongMove}
+              Best: {uciToSan(pos.fen, result.strongMove)}
             </span>
           </div>
           <p className="mt-2 text-sm text-muted-foreground">

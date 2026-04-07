@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Chessboard } from "react-chessboard";
 import { Chess } from "chess.js";
 import { Navbar } from "@/components/navbar";
+import { uciToSan, uciLineToSan } from "@/lib/chess-notation";
 import { Footer } from "@/components/footer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -194,14 +195,14 @@ export default function AnalysisPage() {
                     <div className="mt-2 text-sm">
                       <span className="text-muted-foreground">Best move: </span>
                       <span className="font-mono font-medium text-primary">
-                        {result.evaluation.bestMove}
+                        {uciToSan(fen, result.evaluation.bestMove)}
                       </span>
                     </div>
                     {result.evaluation.bestLine.length > 0 && (
                       <div className="mt-1 text-sm">
                         <span className="text-muted-foreground">Line: </span>
                         <span className="font-mono text-muted-foreground">
-                          {result.evaluation.bestLine.join(" ")}
+                          {uciLineToSan(fen, result.evaluation.bestLine).join(" ")}
                         </span>
                       </div>
                     )}

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Chessboard } from "react-chessboard";
 import { Button } from "@/components/ui/button";
+import { uciToSan } from "@/lib/chess-notation";
 import { ChevronLeft, ChevronRight, RotateCcw } from "lucide-react";
 
 interface Position {
@@ -93,11 +94,11 @@ export function ConceptBoard({ positions }: { positions: Position[] }) {
         <div className="flex gap-4 text-sm">
           <div>
             <span className="font-mono text-amber-400">Strong: </span>
-            <span className="font-mono">{pos.strongMove}</span>
+            <span className="font-mono font-bold">{uciToSan(pos.fen, pos.strongMove)}</span>
           </div>
           <div>
             <span className="font-mono text-red-400">Weak: </span>
-            <span className="font-mono">{pos.weakMove}</span>
+            <span className="font-mono">{uciToSan(pos.fen, pos.weakMove)}</span>
           </div>
         </div>
         <p className="mt-2 text-sm text-muted-foreground">{pos.explanation}</p>
