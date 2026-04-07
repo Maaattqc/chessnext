@@ -64,3 +64,4 @@ credentials.json
 *.bak
 *.docx
 .env.railway
+tools/bin/

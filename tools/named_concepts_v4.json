@@ -1,0 +1,528 @@
+[
+  {
+    "name": "King Safety Coordination",
+    "summary": "The optimal line activates the queen to f6 first to create threats and coordinate pieces before moving the king, whereas the suboptimal line rushes the king to e7 without establishing piece harmony, leaving Black vulnerable to the e6 pawn capture.",
+    "description": "In the optimal line, Black plays Qf6 before moving the king. This is a critical tempo move: the queen on f6 eyes the h4 pawn, pressures White's position, and forces White's king to shuffle (Kc2, Kd2) rather than immediately capitalizing on Black's weaknesses. By the time Black's king reaches e7 in the optimal line, the bishop has repositioned to c7, creating a more solid defensive structure before White plays Bxe6.",
+    "difficulty": "advanced",
+    "positions": [
+      {
+        "fen": "1b1qk2r/3p3p/bp2p2p/4P2n/1rP4P/2P3PB/P2K1P2/4R2R b k - 2 25",
+        "strong_line": [
+          "Qf6",
+          "Kc2",
+          "Bc7",
+          "Kd2",
+          "Ke7",
+          "Bxe6"
+        ],
+        "weak_line": [
+          "Ke7",
+          "Re3",
+          "Ba7",
+          "Kd1",
+          "Qa8",
+          "Bxe6"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "King Safety Consolidation",
+    "summary": "The optimal line prioritizes tucking the king away with Kh1 while developing harmoniously, whereas the suboptimal line wastes tempo with Qc1 and concedes the bishop pair without securing the king.",
+    "description": "The key lesson for a 1500-rated player is that king safety is not just about castling — it includes small prophylactic moves like Kh1 that anticipate the opponent's plans before they become threats. When you see your opponent's rook about to land on an open or semi-open file aimed at your king, moving the king one square off that file is often worth more than any active plan. The optimal line shows that development (Nbd2) and king safety (Kh1) can be combined efficiently, while the suboptimal line shows how reactive play (Qc1, Bf4) lets Black dictate the tempo.",
+    "difficulty": "intermediate",
+    "positions": [
+      {
+        "fen": "r2qk2r/pp2bppp/1nn1p3/3pP3/3P2b1/1B2BN2/PP3PPP/RN1Q1RK1 w kq - 2 11",
+        "strong_line": [
+          "Nbd2",
+          "Qd7",
+          "Kh1",
+          "Rg8"
+        ],
+        "weak_line": [
+          "Qc1",
+          "Na5",
+          "Bf4",
+          "Rg8"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Desperado Tempo Sacrifice",
+    "summary": "The optimal line sacrifices the queen to destroy the king's cover and force a perpetual or material gain through tempo, while the suboptimal line wastes moves chasing a minor piece and loses the initiative entirely.",
+    "description": "In the optimal line, Black plays Qxc3+, sacrificing the queen for a knight but immediately forcing White's king into the open with Nxc3. After Rg8, Ke1, Black plays Rh8 — not to win material outright, but to maintain constant pressure and deny White any chance to consolidate. Every move Black makes forces a White response, keeping the initiative firmly in Black's hands. This is the essence of a desperado sacrifice: you give up material not because you're losing, but because the forcing nature of the sequence gives you more than you spent.",
+    "description2": "The suboptimal line with Nh5 looks active at first glance — the knight attacks something and Black seems to be playing aggressively. But after Kc2, Qd8, Qxh5, Rg8, White has successfully reorganized, the Black queen has retreated, and the knight on h5 is simply gone with nothing to show for it. Black has spent four moves accomplishing very little while White's king has found relative safety on c2. The position has gone from chaotic and dangerous to merely equal or worse for Black.",
+    "description3": "The key lesson for a 1500-rated player is to distinguish between moves that look aggressive and moves that are genuinely forcing. Qxc3+ is forcing because White must recapture, and every subsequent Black move in the optimal line demands an immediate response. Nh5, by contrast, is easily ignored or answered at White's convenience. When your position requires urgency — as Black's does here with a king still on e8 and open files — prioritize moves that your opponent cannot ignore, even if they require material investment.",
+    "difficulty": "advanced",
+    "positions": [
+      {
+        "fen": "rnb1k2r/p2p1ppp/2p2n2/qp2p3/P3P2N/R1PP4/NP1K1PPP/2BQ1B1R b kq - 0 10",
+        "strong_line": [
+          "Qxc3+",
+          "Nxc3",
+          "Rg8",
+          "Ke1",
+          "Rh8"
+        ],
+        "weak_line": [
+          "Nh5",
+          "Kc2",
+          "Qd8",
+          "Qxh5",
+          "Rg8"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "King Activation Priority",
+    "summary": "The optimal line immediately centralizes the king toward the action rather than wasting time with rook shuffling that delays the king's journey to a dominant square.",
+    "description": "The lesson for a 1500-rated player is this: don't be seduced by rook moves that look busy but don't improve your worst-placed piece. Ask yourself — which piece is most out of play? Here the king on e1 is doing nothing, while a king on e3 or d3 would be a powerful fighting piece supporting the d4 pawn and restricting Black's king. Leela's MCTS analysis confirms that king centralization (Kf2-e3) outweighs superficially active rook play (Rc1) because the king's long-term influence on the position compounds over many moves.",
+    "difficulty": "intermediate",
+    "positions": [
+      {
+        "fen": "5bbr/p6p/2k5/2pr4/P2PN1p1/6PP/1PP5/1R2K1R1 w - - 0 26",
+        "strong_line": [
+          "Kf2",
+          "Bg7",
+          "Ke3",
+          "Bf7"
+        ],
+        "weak_line": [
+          "Rc1",
+          "Bh6",
+          "Kf2",
+          "Bf7"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Bishop-Rook Coordination",
+    "summary": "The optimal line activates the bishop and rook together to create a coordinated long-range battery, while the suboptimal line wastes tempo with the knight and allows Black to consolidate.",
+    "description": "The key lesson for a 1500-rated player is that in complex endgames with bishops and rooks, long-range pieces must be coordinated to control key diagonals and files simultaneously. Rb4 and Bc4 together form a battery of influence across the board, while the knight in the suboptimal line is a poor substitute for this kind of harmony. Always ask: are my pieces talking to each other, or are they working in isolation?",
+    "difficulty": "intermediate",
+    "positions": [
+      {
+        "fen": "3r2k1/4r3/B7/P1pP2p1/4Rp2/1p1N2p1/3K4/2R2b2 w - - 0 41",
+        "strong_line": [
+          "Rb4",
+          "Rg7",
+          "Bc4",
+          "Kh8"
+        ],
+        "weak_line": [
+          "Nb4",
+          "Kg7",
+          "Kc3",
+          "Rh8"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Sacrificial Initiative Seizure",
+    "summary": "The optimal line sacrifices material immediately to seize the initiative and create concrete threats, rather than passively developing a piece while allowing Black to consolidate.",
+    "description": "In the optimal line, White plays Nxe4, boldly capturing the pawn and inviting hxg4 in response. Rather than retreating or defending, White continues with h3, immediately attacking the newly advanced pawn on g4. This forces Black into a defensive posture with Qe8, after which Nf6+ delivers a powerful check that forks or disrupts Black's king. The key insight is that White is not simply winning material — White is using each move to generate a new threat, keeping Black permanently on the back foot.",
+    "description2": "The suboptimal line Bb2 looks natural — it develops a piece and eyes the long diagonal — but it gives Black the tempo to play Qg5, activating the queen with threats of her own. After Nxe4 Rh8, Black has stabilized and even begun counterplay on the h-file. The difference is that Bb2 allows Black to dictate the pace, while Nxe4 forces Black to react to White's agenda from move one.",
+    "description3": "The concept here is that in sharp, tactical positions, the side that moves first with concrete threats often wins the 'conversation.' A 1500-rated player might prefer Bb2 because it feels safe and logical, but Leela's analysis shows that safety is an illusion here — Black's position is already dangerous, and only immediate action (Nxe4, h3, Nf6+) prevents Black from consolidating. When you have a forcing sequence available, use it before the window closes.",
+    "difficulty": "advanced",
+    "positions": [
+      {
+        "fen": "r1bq1r2/pppn1p1k/4p1p1/7p/2PPp1N1/1PN5/P4PPP/1RB1K2R w K - 0 16",
+        "strong_line": [
+          "Nxe4",
+          "hxg4",
+          "h3",
+          "Qe8",
+          "Nf6+"
+        ],
+        "weak_line": [
+          "Bb2",
+          "Qg5",
+          "Nxe4",
+          "Rh8"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Rook Activity Before King Flight",
+    "summary": "The optimal line activates the rook with Rh5 to create immediate threats before moving the king, whereas the suboptimal line passively retreats the king first and allows White to seize the initiative with e5.",
+    "description": "In the optimal line, Black plays Rh5 immediately, swinging the rook to an aggressive post on the fifth rank before moving the king. This forces White to respond to the rook's activity rather than simply advancing pawns or coordinating pieces freely. After Kg1 Ke7, Black's king moves only once the rook is already doing useful work, and the sequence Qe5+ Kd7 Rd1+ Kc6 Qe8+ shows White scrambling to give checks rather than consolidating — Black's rook on h5 is a key reason White cannot simply dominate the position.",
+    "description_extended": "The suboptimal line Ke7 e5 Kd8 Kg1 Kc7 Qc8+ demonstrates what happens when Black moves the king passively without first activating the rook. White immediately plays e5, gaining space and opening lines, and then coordinates king safety with Kg1 before launching Qc8+ — Black is on the back foot the entire time. The key lesson is that in sharp positions, a rook placed on an active square (h5 here) creates concrete threats that force the opponent to react, buying time and improving your own coordination. Simply retreating the king without improving your worst-placed piece gives the opponent a free tempo to strengthen their position.",
+    "difficulty": "intermediate",
+    "positions": [
+      {
+        "fen": "5k1r/5p2/5n2/p4Qp1/4P3/P3P3/2r4R/4RK2 b - - 3 30",
+        "strong_line": [
+          "Rh5",
+          "Kg1",
+          "Ke7",
+          "Qe5+",
+          "Kd7",
+          "Rd1+",
+          "Kc6",
+          "Qe8+"
+        ],
+        "weak_line": [
+          "Ke7",
+          "e5",
+          "Kd8",
+          "Kg1",
+          "Kc7",
+          "Qc8+"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Rook Activation Before Retreat",
+    "summary": "The optimal line uses Re7 to activate the rook and create immediate threats before addressing the king safety, while the suboptimal line passively moves the king without generating counterplay.",
+    "description": "In the optimal line, Black begins with Re7, placing the rook on an active square that both pressures White's queen and prepares to support the king's escape. After White captures with Kxe3, Black plays Kf7, moving the king to safety while the rook on e7 remains a powerful piece. The key insight is that Re7 accomplishes two goals simultaneously: it threatens the queen and sets up a defensive battery, whereas jumping straight to Kf7 in the suboptimal line gives White time to consolidate with Kxe5, winning material for free.\n\nThe suboptimal line with Kf7 immediately looks natural — get the king safe first — but it ignores the bishop on e3 and allows White's king to become an active attacker by capturing on e5. After Kxe5 and Ke4, White's king marches into the center with tempo, and Black's pieces remain uncoordinated. The bishop on d7 comes too late to stop White's initiative.\n\nThe deeper lesson here is about move-order economy: Re7 forces White to react (the queen must move or be traded unfavorably), buying Black a tempo to reorganize. The sequence Nc3, Kg7, Rxh4, Bd7 shows Black methodically neutralizing White's queenside knight and h-pawn threats while the rook stays active. A 1500-rated player often prioritizes king safety above all else, but strong engines recognize that creating threats while defending is almost always superior to pure passive defense.",
+    "difficulty": "advanced",
+    "positions": [
+      {
+        "fen": "2b1k3/Q1P3rp/1p6/2p1n3/3PK2p/P3b3/RP3P2/1NB4R b - - 0 25",
+        "strong_line": [
+          "Re7",
+          "Kxe3",
+          "Kf7",
+          "Nc3",
+          "Kg7",
+          "Rxh4",
+          "Bd7"
+        ],
+        "weak_line": [
+          "Kf7",
+          "Kxe5",
+          "Kg6",
+          "Ke4",
+          "Bd7"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "King Activity Priority",
+    "summary": "The optimal line activates the king toward the center before capturing material, understanding that long-term king positioning outweighs the immediate pawn gain from Bxd6.",
+    "description": "In the suboptimal line, White grabs the d6 pawn with Bxd6, which looks tempting because it wins material. However, after Kd8 and Rg8, Black's rook becomes very active and the Black king rushes toward the center, leaving White's own king stranded on e1 and poorly coordinated for the endgame battle ahead. Winning a pawn means little if your pieces end up passive and your king is left behind.",
+    "difficulty": "intermediate",
+    "positions": [
+      {
+        "fen": "4k2r/1p1b4/2pn4/7p/1p2PB1P/8/8/4K3 w k - 8 41",
+        "strong_line": [
+          "Kf1",
+          "Kf7",
+          "Ke2",
+          "Rg8"
+        ],
+        "weak_line": [
+          "Bxd6",
+          "Kd8",
+          "Kd2",
+          "Rg8"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Tactical Repetition Retreat",
+    "summary": "The optimal line sacrifices the queen trade to force a repetition draw from a losing position, while the suboptimal line passively defends and allows White to build a winning attack.",
+    "description": "In this position, Black is behind in development and facing serious pressure. The key insight in the optimal line is that after 10...Qh4, Black is not simply trading queens — Black is forcing White to react with 11.Nxh4, and then immediately retreating the rook with 11...Rf8, followed by 12...Rh8. This rook shuffle (Rf8 then Rh8) is the critical idea: Black is essentially saying 'I have nothing better, so I will repeat the position and claim a draw rather than drift into a losing endgame or middlegame.'",
+    "description_extended": "The suboptimal line 10...Qe7 looks natural and solid — it develops the queen to a safe square and prepares castling. However, after 11.Bd3 Rg8 12.Ng5, White has a dangerous attacking setup with the knight on g5 eyeing f7 and the bishop on d3 pointing at the kingside. Black's king is stuck in the center and White's pieces are coordinating for a direct assault. The queen on e7 turns out to be a passive defender rather than an active piece.",
+    "description_full": "The deeper concept here is recognizing when a position is objectively bad enough that forcing a draw by repetition is the correct practical decision, even if it requires an unusual queen sortie like Qh4. A 1500-rated player might avoid Qh4 because it 'gives up the queen' or looks committal, but Leela's MCTS analysis shows the resulting rook shuffle back to h8 achieves repetition before White can improve. This is called 'repetition as resource' — using the draw option as a weapon when your position has no good constructive plan. Always ask: if I can't win, can I draw?",
+    "difficulty": "advanced",
+    "positions": [
+      {
+        "fen": "rnbqk2r/pp3ppp/4p3/8/3PP3/5N2/P2Q1PPP/R3KB1R b KQkq - 0 10",
+        "strong_line": [
+          "Qh4",
+          "Nxh4",
+          "Rf8",
+          "Qg5",
+          "Rh8"
+        ],
+        "weak_line": [
+          "Qe7",
+          "Bd3",
+          "Rg8",
+          "Ng5"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Deflection Before Recapture",
+    "summary": "The optimal line uses Qg3 to deflect the h-pawn and open the h-file before recapturing on e6, gaining a critical tempo that leaves White's king dangerously exposed rather than allowing White to consolidate.",
+    "description": "In the suboptimal line, Black immediately plays dxe6, recapturing the pawn and seemingly solving the central tension. But after cxd4 Nf6 Ng5 Rg8, White has time to organize and the position remains roughly balanced — Black's king is still stuck in the center and White's pieces are coordinating smoothly toward the kingside.\n\nThe key insight in the optimal line is that Black first plays Qg3, forcing hxg3. This seemingly small move does something profound: it opens the h-file, weakens White's kingside pawn structure, and critically deflects White's h-pawn before Black recaptures with dxe6. Now after cxd4 Nge7 Ng5, Black's knight on e7 is far better placed than the knight on f6 in the suboptimal line — it supports the d5 square, defends against threats, and keeps options open for kingside counterplay along the newly opened h-file.\n\nFor a 1500-rated player, the lesson is about move order and deflection: sometimes you should not immediately make the 'obvious' recapture or central move. By inserting Qg3 first, Black forces a structural concession from White (hxg3 ruins White's kingside pawn cover) before proceeding with the main plan. This is a recurring theme in complex middlegames — a forcing intermediate move that changes the positional landscape before you commit to your main continuation can completely alter which side has the advantage.",
+    "difficulty": "advanced",
+    "positions": [
+      {
+        "fen": "r1b1k1nr/ppqp3p/2n1P1p1/2p5/3b4/2PBN2N/PP3PPP/R1BQK2R b KQkq - 0 10",
+        "strong_line": [
+          "Qg3",
+          "hxg3",
+          "dxe6",
+          "cxd4",
+          "Nge7",
+          "Ng5"
+        ],
+        "weak_line": [
+          "dxe6",
+          "cxd4",
+          "Nf6",
+          "Ng5",
+          "Rg8"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "King Activation Priority",
+    "summary": "The optimal line immediately activates the king toward the center with Kd2 while coordinating the bishop to restrict the enemy king, rather than prematurely advancing rooks into passive activity.",
+    "description": "The key lesson for a 1500-rated player is: in rook and minor piece endgames, ask yourself whether your king is active before committing your rooks to specific squares. Kd2 costs nothing and gains everything — it centralizes the king, prepares to support the f6 pawn from behind, and keeps options open. Rook moves like Re5 can always come later, but every tempo the king wastes on the back rank is a tempo Black uses to coordinate a defense.",
+    "difficulty": "intermediate",
+    "positions": [
+      {
+        "fen": "2rk4/1p6/2p2P2/p4b2/P1P4B/4R2P/1P3PP1/3K2R1 w - - 1 36",
+        "strong_line": [
+          "Kd2",
+          "Kc7",
+          "Bg3+",
+          "Kd8"
+        ],
+        "weak_line": [
+          "Re5",
+          "Kd7",
+          "Rge1",
+          "Rh8"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Quiet Rook Repositioning",
+    "summary": "The optimal line preserves the bishop's long-term pressure by relocating the rook to a dominant square, whereas the suboptimal line sacrifices the bishop immediately for short-term activity that dissipates White's advantage.",
+    "description": "The key lesson for a 1500-rated player is that strong engines often prefer quiet moves that improve piece coordination over flashy checks or captures. Rc5 keeps the tension alive and forces Black to react carefully, while Bg8+ resolves the tension prematurely in Black's favor. When you have a positional advantage, ask yourself: does this move maintain my edge, or does it trade it away for a momentary spark?",
+    "difficulty": "intermediate",
+    "positions": [
+      {
+        "fen": "7r/3n3r/p1R1Bk2/1p4p1/8/5P2/P2K4/8 w - - 5 36",
+        "strong_line": [
+          "Rc5",
+          "Kxe6",
+          "Kc2",
+          "Rf8",
+          "Rc8"
+        ],
+        "weak_line": [
+          "Bg8+",
+          "Ke7",
+          "Ke3",
+          "Rxg8"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Tempo Over Material",
+    "summary": "The optimal line maintains queen activity and initiative through forcing checks rather than trading the queen for a rook and losing momentum.",
+    "description": "For a 1500-rated player, the lesson is this: when your queen is already on an aggressive square causing real threats, do not voluntarily trade it unless you get something of equal or greater value in return. Here, Qh4 looks active but actually surrenders the initiative. The stronger network recognized that keeping the queen meant Black's king would remain under fire with no safe haven, while the suboptimal line let Black consolidate. Always ask: does this trade help me or help my opponent?",
+    "difficulty": "intermediate",
+    "positions": [
+      {
+        "fen": "r1b2bnr/1pp1p1pQ/4k3/pB1N1p2/3n4/7P/PPPP1PP1/R1B1K1NR w KQ - 1 11",
+        "strong_line": [
+          "Nxc7+",
+          "Ke5",
+          "Qxh8",
+          "Nh6"
+        ],
+        "weak_line": [
+          "Qh4",
+          "Rxh4",
+          "Nxc7+",
+          "Kd6",
+          "Be2",
+          "Nh6"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "King Safety Retreat",
+    "summary": "The optimal line prioritizes activating the king to a safer square while consolidating the rook advantage, rather than immediately pressing with rook activity that allows Black to coordinate pieces.",
+    "description": "In the optimal line, White plays Kf1 first, stepping away from the e2 square before recapturing on d8. This subtle king move is the key insight: after Kxd8 Rg2, White's king is already heading toward a safer, more active position on f1, and the rook on g2 controls the g-file while Black's knight on e6 and bishop on g7 are passively placed. White's pieces work in harmony — the king walks to e2 naturally, and the rooks dominate open files without allowing Black any counterplay.",
+    "description2": "The suboptimal line Rd3 looks active but misses the point. After Ke6 Rf3 Be7, Black's king has centralized aggressively and the bishop on e7 is now well-placed and coordinated with the knight. Black has used White's 'active' rook moves to organize a defense, and White's king on e2 is suddenly more exposed than it appears. The rook shuffling on d3 and f3 accomplished little while Black improved every piece.",
+    "description3": "The lesson for a 1500-rated player is that king safety and piece coordination must come before automatic 'active' rook moves. When you have a material advantage (an extra rook here), the winning technique is often to tuck your king away safely first, then convert methodically. Leela's engine understood that Kf1 removes a potential vulnerability before cashing in the material, whereas Rd3 looks purposeful but actually hands Black free tempos to coordinate. Always ask: before I make the 'obvious' move, is my king safe?",
+    "difficulty": "intermediate",
+    "positions": [
+      {
+        "fen": "r2R1b2/p3k1nr/8/1p4p1/6R1/PP6/2P1KP1P/8 w - - 4 31",
+        "strong_line": [
+          "Kf1",
+          "Kxd8",
+          "Rg2",
+          "Ne6",
+          "Ke2",
+          "Bg7"
+        ],
+        "weak_line": [
+          "Rd3",
+          "Ke6",
+          "Rf3",
+          "Be7"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Sacrificial Pawn Storm Activation",
+    "summary": "The optimal line uses e4 to open the center and sacrifice material, winning back the piece with tempo through a devastating knight fork on e5, while the suboptimal line passively retreats and allows Black to consolidate.",
+    "description": "The suboptimal line beginning with Rh1 wastes a critical tempo by moving a rook to a square it already effectively controls, doing nothing to challenge Black's active pieces. After Black captures on f4 and White recaptures, Black gets to play Rg8, stabilizing the position and keeping the extra pawn. The engine recognizes that passive play here lets Black consolidate what would otherwise be a shaky position with misplaced pieces.",
+    "difficulty": "advanced",
+    "positions": [
+      {
+        "fen": "rnbqk2r/pp5p/5ppb/4p2n/2Pp1B2/3N1N2/PP2PPPP/R2QKBR1 w Qkq - 2 11",
+        "strong_line": [
+          "e4",
+          "Nxf4",
+          "Ng5",
+          "fxg5",
+          "Nxe5"
+        ],
+        "weak_line": [
+          "Rh1",
+          "Nxf4",
+          "Nxf4",
+          "Rg8"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Rook Penetration Tempo",
+    "summary": "The optimal line uses Re5-e6 to aggressively centralize and threaten the enemy position with tempo, whereas the suboptimal line retreats to h8 and wastes time without creating immediate pressure.",
+    "description": "In the optimal line, White plays Re5, placing the rook on a powerful central square where it eyes the entire fifth rank and prepares to advance further. After Kc7, White follows up with Re6, a move that simultaneously attacks the pawn on d6, restricts the Black king, and coordinates with the rook on h4. This forces Black to respond with Bd7 just to defend, meaning White is dictating the flow of the game entirely on their own terms.",
+    "difficulty": "intermediate",
+    "positions": [
+      {
+        "fen": "rkb1R3/p7/3p1bp1/1p6/2P1Pp1R/P5p1/1P6/3K1B2 w - - 1 31",
+        "strong_line": [
+          "Re5",
+          "Kc7",
+          "Re6",
+          "Bd7"
+        ],
+        "weak_line": [
+          "Reh8",
+          "Kc7",
+          "Bd3",
+          "Bd7"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Deflection Before Regrouping",
+    "summary": "The optimal line forces the enemy king off the back rank with Re8+ before retreating the king to safety, winning material immediately rather than passively repositioning.",
+    "description": "A 1500-rated player might instinctively want to tuck the king away to safety first with Kg1 or Kg2, thinking 'my king is in danger, let me fix that.' But the position demands urgency — Black's d2 pawn is advanced and dangerous, and Black's king on f7 is actually doing important defensive work. By playing Re8+ immediately, White forces Kxe8, pulling the Black king to a worse square where it no longer guards key central squares. After Kg2 and Ne7, the knight is also misplaced, and Bxb6 wins a free pawn with a dominant position.\n\nThe suboptimal line shows what happens when you delay: after Kg1 Ke7 Bf2, Black's king marches toward d8 and the d2 pawn remains a thorn. White is essentially playing catch-up. The concept here is 'deflection before regrouping' — use a forcing move to displace an enemy piece first, then improve your own position. Forcing moves reset the opponent's plans and should always be considered before quiet moves, even when your own king feels uncomfortable.",
+    "difficulty": "intermediate",
+    "positions": [
+      {
+        "fen": "3R2nr/1r3k1p/1ppb2p1/4p3/3B2bP/8/NPPp1K2/R7 w - - 0 26",
+        "strong_line": [
+          "Re8",
+          "Kxe8",
+          "Kg2",
+          "Ne7",
+          "Bxb6"
+        ],
+        "weak_line": [
+          "Kg1",
+          "Ke7",
+          "Bf2",
+          "Kxd8",
+          "Kg2",
+          "Ne7"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Tempo-Gaining Retreat Activation",
+    "summary": "The optimal line uses a knight maneuver that gains a tempo via check to reposition the king safely before winning material, whereas the suboptimal line grabs a pawn immediately and allows Black to untangle and equalize.",
+    "description": "In the optimal line, White plays Nge2 instead of immediately capturing on e4. This might look passive, but the point is revealed on the next move: after Black's knight checks with Nc2+, White's king steps to d2, and the knight on c2 is now trapped or must retreat. White then plays Nxe4+, winning the pawn on e4 with check, forcing Black's king to move and giving White a clean extra pawn with a better-coordinated position. The sequence uses Black's own aggressive knight move against him — the check on c2 actually helps White's king find a better square.\n\nThe suboptimal line with Nxe4 looks natural because it immediately wins the e4 pawn, but after Na6, Black's knight escapes to a safe square and begins to regroup. White's pieces lack coordination, and after Nd2 Rxh8, Black has traded off White's powerful rook and the position is far less clear. White grabbed material without considering how Black would respond, and the initiative slips away.\n\nThe key concept here is that sometimes a one-move delay — a preparatory move like Nge2 — is stronger than immediate material gain because it improves piece coordination and exploits the opponent's responses. At the 1500 level, players often grab pawns or pieces as soon as they're available, but stronger players ask: 'What does my opponent do after I take?' In this case, waiting one move forces Black into a worse version of the same position, with White's king safer and pieces better placed before the material is collected.",
+    "difficulty": "intermediate",
+    "positions": [
+      {
+        "fen": "r6R/1p1bkp2/2p3p1/p5P1/1nBPp3/1PN5/P5P1/R3K1N1 w Q - 3 21",
+        "strong_line": [
+          "Nge2",
+          "Nc2+",
+          "Kd2",
+          "Kd6",
+          "Nxe4+",
+          "Ke7"
+        ],
+        "weak_line": [
+          "Nxe4",
+          "Na6",
+          "Nd2",
+          "Rxh8"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "King Safety Activation",
+    "summary": "The optimal line centralizes the king proactively with Kg3-Kf2 before forcing the rook trade on d8, ensuring White's king is safe and actively placed rather than rushing into a tactical sequence that leaves the king exposed on h2.",
+    "description": "For a 1500-rated player, the key lesson is that even in winning positions, king safety must be respected before launching an attack or forcing simplification. The moves Kg3 and Kf2 cost very little — Black has no immediate threats — but they eliminate long-term risks. Leela's MCTS analysis recognizes that the 'slow' king improvement leads to a cleaner, lower-risk win compared to the impatient a4 followed by Rd8+, which achieves the same material goal but from a slightly less secure king position.",
+    "difficulty": "intermediate",
+    "positions": [
+      {
+        "fen": "r5k1/1p2qp2/2bR2p1/p5P1/1n3P1Q/1P5P/P5BK/3R4 w - - 1 41",
+        "strong_line": [
+          "Kg3",
+          "Qe8",
+          "Kf2",
+          "Kf8",
+          "Rd8"
+        ],
+        "weak_line": [
+          "a4",
+          "Kf8",
+          "Rd8+"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Clearance Sacrifice Activation",
+    "summary": "The optimal line uses Qc6 to sacrifice the queen and force open the c-file while eliminating the b4 pawn's influence, immediately activating the Bf2 retreat with tempo, whereas the suboptimal line plays Bf2 passively without first destroying Black's pawn structure.",
+    "description": "In the optimal line, White plays Qc6 first — a stunning queen sacrifice that forces Black to recapture with bxc6. This is not just a random piece trade; it demolishes Black's b4 pawn and opens lines around Black's king, all while forcing Black's pieces into awkward positions. Only after this structural damage does White play Bf2, retreating the bishop to safety with maximum effect because Black's queenside is now shattered and the c6 pawn is a long-term weakness.\n\nThe suboptimal line plays Bf2 immediately without the preparatory Qc6 sacrifice. While Bf2 is a sensible move on its own, it allows Black to respond with Nc6, developing a piece and contesting the center. Black's position remains solid and the b4 pawn still sits aggressively. White then needs Kd2 just to connect the rooks and stabilize, spending an extra tempo on housekeeping rather than attacking.\n\nThe key concept here is that the queen sacrifice on c6 is not a loss of material but a structural investment — it forces Black into a worse pawn configuration before White tidies up with Bf2. The follow-up Nh7 trapping or harassing Black's rook becomes far more powerful after the queenside has been cracked open. A 1500-rated player might hesitate to give up a queen even temporarily, but Leela's analysis shows that the forced recapture bxc6 leaves Black's position permanently compromised, making every subsequent White move hit harder.",
+    "difficulty": "advanced",
+    "positions": [
+      {
+        "fen": "1nbqkbr1/1pppp1p1/7n/3P1pNp/1p6/2Q1BPP1/2P1P2P/rN2KB1R w K - 0 11",
+        "strong_line": [
+          "Qc6",
+          "bxc6",
+          "Bf2",
+          "Rh8",
+          "Nh7"
+        ],
+        "weak_line": [
+          "Bf2",
+          "Nc6",
+          "Kd2",
+          "e6",
+          "Nh7"
+        ]
+      }
+    ]
+  }
+]

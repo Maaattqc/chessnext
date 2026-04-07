@@ -1,0 +1,309 @@
+"""
+Batched MCTS — 10-20x faster than naive implementation.
+
+Key optimization: instead of evaluating one leaf at a time (800 individual
+GPU calls), we run "virtual loss" MCTS that selects multiple leaves per
+batch, evaluates them together in one GPU call, then backpropagates.
+
+800 simulations with batch_size=32 = only 25 GPU calls instead of 800.
+"""
+
+import math
+from typing import Optional
+
+import chess
+import numpy as np
+import torch
+
+C_PUCT = 2.5
+FPU_VALUE = 0.0
+DIRICHLET_ALPHA = 0.3
+DIRICHLET_EPSILON = 0.25
+
+
+class Node:
+    __slots__ = ["parent", "move", "prior", "children",
+                 "visits", "value_sum", "expanded"]
+
+    def __init__(self, parent, move, prior):
+        self.parent = parent
+        self.move = move
+        self.prior = prior
+        self.children: list["Node"] = []
+        self.visits = 0
+        self.value_sum = 0.0
+        self.expanded = False
+
+    @property
+    def value(self):
+        return self.value_sum / self.visits if self.visits > 0 else FPU_VALUE
+
+    def ucb(self, parent_visits):
+        return self.value + C_PUCT * self.prior * math.sqrt(parent_visits) / (1 + self.visits)
+
+    def best_child(self):
+        return max(self.children, key=lambda c: c.ucb(self.visits))
+
+    def most_visited(self):
+        return max(self.children, key=lambda c: c.visits)
+
+
+class BatchMCTS:
+    """MCTS with batched neural network evaluation."""
+
+    def __init__(self, model, device, policy_map, num_sims=800, batch_size=32):
+        self.model = model
+        self.device = device
+        self.policy_map = policy_map
+        self.num_sims = num_sims
+        self.batch_size = batch_size
+        self.dtype = next(model.parameters()).dtype
+
+        # Build reverse policy map for fast lookup
+        self._reverse_map = {}
+        for pidx, attn in enumerate(policy_map):
+            self._reverse_map[int(attn)] = pidx
+
+    def _board_to_tensor(self, board):
+        from leela_net import board_to_planes
+        return board_to_planes(board)
+
+    def _evaluate_batch(self, boards):
+        """Evaluate multiple positions in one GPU call."""
+        if not boards:
+            return [], []
+
+        planes = np.stack([self._board_to_tensor(b) for b in boards])
+        x = torch.from_numpy(planes).to(device=self.device, dtype=self.dtype)
+
+        with torch.no_grad():
+            pol_logits, val_logits = self.model(x)
+
+        pol_np = pol_logits.float().cpu().numpy()
+        val_np = val_logits.float().cpu().numpy()
+
+        policies = []
+        values = []
+
+        for i, board in enumerate(boards):
+            # Policy: map to legal moves
+            probs = np.exp(pol_np[i] - pol_np[i].max())
+            probs /= probs.sum()
+
+            flip = board.turn == chess.BLACK
+            policy = {}
+            for move in board.legal_moves:
+                from_sq = move.from_square
+                to_sq = move.to_square
+                if flip:
+                    from_sq = chess.square_mirror(from_sq)
+                    to_sq = chess.square_mirror(to_sq)
+
+                attn_idx = from_sq * 64 + to_sq
+                pidx = self._reverse_map.get(attn_idx)
+                if pidx is not None:
+                    policy[move] = float(probs[pidx])
+                else:
+                    policy[move] = 1e-6
+
+            total = sum(policy.values())
+            if total > 0:
+                policy = {m: p / total for m, p in policy.items()}
+            policies.append(policy)
+
+            # Value: WDL -> scalar
+            wdl = np.exp(val_np[i] - val_np[i].max())
+            wdl /= wdl.sum()
+            values.append(float(wdl[0] - wdl[2]))
+
+        return policies, values
+
+    def _get_activation_batch(self, boards):
+        """Get pooled activations for multiple positions in one call."""
+        if not boards:
+            return []
+
+        captured = {}
+        def hook(_, __, out):
+            captured["act"] = out.detach().float().cpu()
+        handle = self.model.encoders[self.model.n_enc - 1].register_forward_hook(hook)
+
+        planes = np.stack([self._board_to_tensor(b) for b in boards])
+        x = torch.from_numpy(planes).to(device=self.device, dtype=self.dtype)
+        with torch.no_grad():
+            self.model(x)
+        handle.remove()
+
+        B = len(boards)
+        acts = captured["act"].numpy().reshape(B, 64, 1024).mean(axis=1)
+        return [acts[i] for i in range(B)]
+
+    def search(self, board: chess.Board) -> Node:
+        """Run batched MCTS. Returns root node."""
+        root = Node(None, None, 1.0)
+
+        # Expand root
+        policies, values = self._evaluate_batch([board])
+        self._expand(root, policies[0])
+        self._backprop(root, values[0])
+
+        # Dirichlet noise at root
+        if root.children:
+            noise = np.random.dirichlet([DIRICHLET_ALPHA] * len(root.children))
+            for child, n in zip(root.children, noise):
+                child.prior = (1 - DIRICHLET_EPSILON) * child.prior + DIRICHLET_EPSILON * n
+
+        # Batched simulations
+        remaining = self.num_sims - 1
+        while remaining > 0:
+            batch_sz = min(self.batch_size, remaining)
+            leaves = []
+            leaf_boards = []
+            leaf_paths = []
+
+            for _ in range(batch_sz):
+                # SELECT
+                node = root
+                b = board.copy()
+                path = [root]
+
+                while node.expanded and node.children:
+                    node = node.best_child()
+                    b.push(node.move)
+                    path.append(node)
+
+                    # Virtual loss to encourage diversity
+                    node.visits += 1
+                    node.value_sum -= 1.0
+
+                if b.is_game_over():
+                    # Terminal: undo virtual loss and backprop real value
+                    node.visits -= 1
+                    node.value_sum += 1.0
+                    result = b.result()
+                    if result == "1-0":
+                        v = 1.0 if b.turn == chess.BLACK else -1.0
+                    elif result == "0-1":
+                        v = 1.0 if b.turn == chess.WHITE else -1.0
+                    else:
+                        v = 0.0
+                    self._backprop(node, v)
+                    remaining -= 1
+                    continue
+
+                leaves.append(node)
+                leaf_boards.append(b)
+                leaf_paths.append(path)
+
+            if not leaves:
+                remaining -= batch_sz
+                continue
+
+            # BATCH EVALUATE
+            policies, values = self._evaluate_batch(leaf_boards)
+
+            # EXPAND + BACKPROP
+            for j, (node, policy, value, path) in enumerate(
+                    zip(leaves, policies, values, leaf_paths)):
+                # Undo virtual loss
+                node.visits -= 1
+                node.value_sum += 1.0
+                # Expand
+                self._expand(node, policy)
+                # Backprop
+                self._backprop(node, value)
+
+            remaining -= len(leaves)
+
+        return root
+
+    def _expand(self, node, policy):
+        node.expanded = True
+        for move, prior in policy.items():
+            node.children.append(Node(node, move, prior))
+
+    def _backprop(self, node, value):
+        while node is not None:
+            node.visits += 1
+            node.value_sum += value
+            value = -value
+            node = node.parent
+
+    def get_optimal_path(self, root, board, max_depth=20):
+        """Most-visited path with activations."""
+        path_boards = []
+        node = root
+        b = board.copy()
+        moves = []
+
+        for _ in range(max_depth):
+            if not node.children:
+                break
+            node = node.most_visited()
+            b.push(node.move)
+            path_boards.append(b.copy())
+            moves.append(node.move)
+            if b.is_game_over():
+                break
+
+        # Batch activation extraction
+        acts = self._get_activation_batch(path_boards) if path_boards else []
+
+        result = []
+        b2 = board.copy()
+        for i, (move, act) in enumerate(zip(moves, acts)):
+            san = b2.san(move)
+            b2.push(move)
+            result.append({
+                "move": move, "san": san, "activation": act,
+                "visits": root.children[0].visits if i == 0 else 0,
+            })
+
+        return result
+
+    def get_suboptimal_path(self, root, board, min_value_diff=0.1,
+                            min_visit_ratio=0.05, max_depth=20):
+        """High-visit alternative branch."""
+        if not root.children or len(root.children) < 2:
+            return None
+
+        sorted_ch = sorted(root.children, key=lambda c: c.visits, reverse=True)
+        best = sorted_ch[0]
+
+        for child in sorted_ch[1:]:
+            if child.visits < 2:
+                continue
+            vdiff = abs(best.value - child.value)
+            vratio = child.visits / max(best.visits, 1)
+            if vdiff >= min_value_diff and vratio >= min_visit_ratio:
+                # Follow this branch
+                path_boards = []
+                node = child
+                b = board.copy()
+                b.push(node.move)
+                path_boards.append(b.copy())
+                moves = [node.move]
+
+                for _ in range(max_depth - 1):
+                    if not node.children:
+                        break
+                    node = node.most_visited()
+                    b.push(node.move)
+                    path_boards.append(b.copy())
+                    moves.append(node.move)
+                    if b.is_game_over():
+                        break
+
+                acts = self._get_activation_batch(path_boards)
+                result = []
+                b2 = board.copy()
+                for move, act in zip(moves, acts):
+                    san = b2.san(move)
+                    b2.push(move)
+                    result.append({
+                        "move": move, "san": san, "activation": act,
+                        "visits": child.visits,
+                    })
+                return result
+
+        return None
