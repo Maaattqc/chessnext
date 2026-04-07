@@ -4,7 +4,11 @@ import { prisma } from "@/lib/db";
 import { Resend } from "resend";
 import { authLimiter, rateLimit } from "@/lib/rate-limit";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+let _resend: Resend | null = null;
+function getResend() {
+  if (!_resend) _resend = new Resend(process.env.RESEND_API_KEY);
+  return _resend;
+}
 
 const schema = z.object({
   email: z.string().email().transform((e) => e.toLowerCase().trim()),
@@ -70,7 +74,7 @@ export async function POST(req: NextRequest) {
     });
 
     // Send email via Resend
-    await resend.emails.send({
+    await getResend().emails.send({
       from: "ChessNext.ai <onboarding@resend.dev>",
       to: email,
       subject: `${code} is your ChessNext.ai login code`,
