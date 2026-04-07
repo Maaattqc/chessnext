@@ -184,10 +184,26 @@ PIECE_INDEX = {
 
 
 def board_to_planes(board: chess.Board) -> np.ndarray:
-    """Encode a board as (112, 8, 8) float32 in Lc0 classical format."""
+    """Encode a board as (112, 8, 8) float32 in Lc0 input format.
+
+    Planes layout (T = 8 time steps × 13 planes + 8 meta):
+      T1 planes 0-11:  current pieces (6 ours + 6 theirs)
+      T1 plane 12:     repetition count
+      T2 planes 13-24: 1 ply ago pieces
+      T2 plane 25:     repetition
+      ...  (8 time steps total)
+      T8 planes 91-102: 7 plies ago pieces
+      T8 plane 103:     repetition
+      Planes 104-111:   meta (castling, side, halfmove, etc.)
+
+    When no move history is available, the current position is repeated
+    for all 8 time steps (standard Lc0 convention for single-position
+    analysis).  Repetition planes stay 0.
+    """
     planes = np.zeros((112, 8, 8), dtype=np.float32)
     us = board.turn
 
+    # Encode current piece placement into planes 0-11
     for sq in chess.SQUARES:
         piece = board.piece_at(sq)
         if piece is None:
@@ -200,6 +216,15 @@ def board_to_planes(board: chess.Board) -> np.ndarray:
         else:
             planes[6 + idx, row, col] = 1.0
 
+    # Fill history slots (T2-T8) by repeating the current position.
+    # Each time step is 13 planes: 12 piece planes + 1 repetition plane.
+    # Repetition planes (12, 25, 38, ...) stay 0.
+    current_pieces = planes[0:12].copy()
+    for t in range(1, 8):
+        offset = t * 13
+        planes[offset:offset + 12] = current_pieces
+
+    # Meta planes (104-111)
     our, their = (chess.WHITE, chess.BLACK) if us == chess.WHITE else (chess.BLACK, chess.WHITE)
     planes[104] = float(board.has_queenside_castling_rights(our))
     planes[105] = float(board.has_kingside_castling_rights(our))

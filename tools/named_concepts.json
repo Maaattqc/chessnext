@@ -239,8 +239,7 @@
       }
     ],
     "size": 12,
-    "avg_teach": 0.01062168056766192,
-    "teachable": true
+    "avg_teach": 0.01062168056766192
   },
   {
     "name": "Forcing Move Priority",
@@ -396,8 +395,7 @@
       }
     ],
     "size": 7,
-    "avg_teach": 0.13457647072417395,
-    "teachable": true
+    "avg_teach": 0.13457647072417395
   },
   {
     "name": "Purposeful Active Response",
@@ -537,8 +535,7 @@
       }
     ],
     "size": 6,
-    "avg_teach": 0.04599460959434509,
-    "teachable": true
+    "avg_teach": 0.04599460959434509
   },
   {
     "name": "Active Coordination Priority",
@@ -669,8 +666,7 @@
       }
     ],
     "size": 6,
-    "avg_teach": 0.1351916864514351,
-    "teachable": true
+    "avg_teach": 0.1351916864514351
   },
   {
     "name": "King Safety First",
@@ -766,8 +762,7 @@
       }
     ],
     "size": 5,
-    "avg_teach": 0.0,
-    "teachable": false
+    "avg_teach": 0.0
   },
   {
     "name": "Rook Activation Before Action",
@@ -865,8 +860,7 @@
       }
     ],
     "size": 4,
-    "avg_teach": 0.04739467054605484,
-    "teachable": true
+    "avg_teach": 0.04739467054605484
   },
   {
     "name": "Active Counterplay Priority",
@@ -958,8 +952,7 @@
       }
     ],
     "size": 4,
-    "avg_teach": 0.039688394870609045,
-    "teachable": true
+    "avg_teach": 0.039688394870609045
   },
   {
     "name": "Active Counterplay Priority",
@@ -1023,8 +1016,7 @@
       }
     ],
     "size": 3,
-    "avg_teach": 0.0,
-    "teachable": false
+    "avg_teach": 0.0
   },
   {
     "name": "Piece Activity Over Material",
@@ -1098,8 +1090,7 @@
       }
     ],
     "size": 3,
-    "avg_teach": 0.07311200598875682,
-    "teachable": true
+    "avg_teach": 0.07311200598875682
   },
   {
     "name": "King Safety Priority",
@@ -1151,8 +1142,7 @@
       }
     ],
     "size": 2,
-    "avg_teach": 0.1530476212501526,
-    "teachable": true
+    "avg_teach": 0.1530476212501526
   },
   {
     "name": "Targeting Critical Enemy Assets",
@@ -1208,8 +1198,7 @@
       }
     ],
     "size": 2,
-    "avg_teach": 0.004866835195571184,
-    "teachable": false
+    "avg_teach": 0.004866835195571184
   },
   {
     "name": "Forcing Tempo Priority",
@@ -1266,8 +1255,7 @@
       }
     ],
     "size": 2,
-    "avg_teach": 0.0864445362240076,
-    "teachable": true
+    "avg_teach": 0.0864445362240076
   },
   {
     "name": "Proactive King Relocation",
@@ -1318,8 +1306,7 @@
       }
     ],
     "size": 2,
-    "avg_teach": 0.1470431238412857,
-    "teachable": true
+    "avg_teach": 0.1470431238412857
   },
   {
     "name": "Forcing Move Priority",
@@ -1371,8 +1358,7 @@
       }
     ],
     "size": 2,
-    "avg_teach": 0.0,
-    "teachable": false
+    "avg_teach": 0.0
   },
   {
     "name": "Forcing Tempo Exploitation",
@@ -1423,8 +1409,7 @@
       }
     ],
     "size": 2,
-    "avg_teach": 0.0353749617934227,
-    "teachable": true
+    "avg_teach": 0.0353749617934227
   },
   {
     "name": "Concrete Threat Precision",
@@ -1476,8 +1461,7 @@
       }
     ],
     "size": 2,
-    "avg_teach": 0.05716580152511597,
-    "teachable": true
+    "avg_teach": 0.05716580152511597
   },
   {
     "name": "Accurate Threat Prioritization",
@@ -1532,8 +1516,7 @@
       }
     ],
     "size": 2,
-    "avg_teach": 0.0,
-    "teachable": false
+    "avg_teach": 0.0
   },
   {
     "name": "King Corner Escape",
@@ -1564,8 +1547,7 @@
       }
     ],
     "size": 1,
-    "avg_teach": 0.0,
-    "teachable": false
+    "avg_teach": 0.0
   },
   {
     "name": "Queen Infiltration Priority",
@@ -1593,8 +1575,7 @@
       }
     ],
     "size": 1,
-    "avg_teach": 0.0,
-    "teachable": false
+    "avg_teach": 0.0
   },
   {
     "name": "Quiet King Safety Step",
@@ -1625,8 +1606,7 @@
       }
     ],
     "size": 1,
-    "avg_teach": 0.1419394165277481,
-    "teachable": true
+    "avg_teach": 0.1419394165277481
   },
   {
     "name": "Rook Restrains Passed Pawn",
@@ -1654,8 +1634,7 @@
       }
     ],
     "size": 1,
-    "avg_teach": 0.11517199128866196,
-    "teachable": true
+    "avg_teach": 0.11517199128866196
   },
   {
     "name": "Resisting Pseudo-Fork Temptation",
@@ -1684,8 +1663,7 @@
       }
     ],
     "size": 1,
-    "avg_teach": 0.10331430286169052,
-    "teachable": true
+    "avg_teach": 0.10331430286169052
   },
   {
     "name": "Knight Centralization with Tempo",
@@ -1718,8 +1696,7 @@
       }
     ],
     "size": 1,
-    "avg_teach": 0.11517811566591263,
-    "teachable": true
+    "avg_teach": 0.11517811566591263
   },
   {
     "name": "Rook Targets Exposed King",
@@ -1746,8 +1723,7 @@
       }
     ],
     "size": 1,
-    "avg_teach": 0.0,
-    "teachable": false
+    "avg_teach": 0.0
   },
   {
     "name": "Dual-Purpose Defensive Queen",
@@ -1776,8 +1752,7 @@
       }
     ],
     "size": 1,
-    "avg_teach": 0.0,
-    "teachable": false
+    "avg_teach": 0.0
   },
   {
     "name": "Rook Targets Passed Pawn",
@@ -1808,8 +1783,7 @@
       }
     ],
     "size": 1,
-    "avg_teach": 0.0,
-    "teachable": false
+    "avg_teach": 0.0
   },
   {
     "name": "Capture the Hanging Passer",
@@ -1836,8 +1810,7 @@
       }
     ],
     "size": 1,
-    "avg_teach": 0.13043594360351562,
-    "teachable": true
+    "avg_teach": 0.13043594360351562
   },
   {
     "name": "King Corner Escape",
@@ -1867,8 +1840,7 @@
       }
     ],
     "size": 1,
-    "avg_teach": 0.0,
-    "teachable": false
+    "avg_teach": 0.0
   },
   {
     "name": "Purposeful Rook Repositioning",
@@ -1899,8 +1871,7 @@
       }
     ],
     "size": 1,
-    "avg_teach": 0.0,
-    "teachable": false
+    "avg_teach": 0.0
   },
   {
     "name": "Forcing Material Capture",
@@ -1930,8 +1901,7 @@
       }
     ],
     "size": 1,
-    "avg_teach": 0.129856139421463,
-    "teachable": true
+    "avg_teach": 0.129856139421463
   },
   {
     "name": "Active Passer Over Defense",
@@ -1963,8 +1933,7 @@
       }
     ],
     "size": 1,
-    "avg_teach": 0.12309128046035767,
-    "teachable": true
+    "avg_teach": 0.12309128046035767
   },
   {
     "name": "Eliminating Active Bishop",
@@ -1993,7 +1962,6 @@
       }
     ],
     "size": 1,
-    "avg_teach": 0.0,
-    "teachable": false
+    "avg_teach": 0.0
   }
 ]

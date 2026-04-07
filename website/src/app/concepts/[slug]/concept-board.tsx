@@ -16,11 +16,19 @@ interface Position {
   arrows: string[][];
 }
 
+interface LineEval {
+  score: number;
+  mate: number | null;
+  bestMove: string;
+  bestLine: string[];
+}
+
 interface StockfishEval {
   score: number;
   mate: number | null;
   bestMove: string;
   bestLine: string[];
+  lines: LineEval[];
   depth: number;
   loading: boolean;
 }
@@ -58,7 +66,7 @@ export function ConceptBoard({ positions }: { positions: Position[] }) {
   const [flipped, setFlipped] = useState(false);
   const [showEngine, setShowEngine] = useState(false);
   const [eval_, setEval] = useState<StockfishEval>({
-    score: 0, mate: null, bestMove: "", bestLine: [], depth: 0, loading: false,
+    score: 0, mate: null, bestMove: "", bestLine: [], lines: [], depth: 0, loading: false,
   });
 
   // Exploration mode: user can move pieces
@@ -79,19 +87,28 @@ export function ConceptBoard({ positions }: { positions: Position[] }) {
   const fetchEval = useCallback(async (fen: string) => {
     setEval((e) => ({ ...e, loading: true }));
     try {
-      const res = await fetch("/api/analysis/position", {
+      const res = await fetch("/api/analysis/eval", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ fen, userRating: 1500 }),
+        body: JSON.stringify({ fen, multiPv: 5, depth: 14 }),
       });
       if (res.ok) {
         const data = await res.json();
         const ev = data.evaluation?.eval || {};
+        const rawLines: Array<{ eval?: { type?: string; value?: number }; bestMove?: string; bestLine?: string[] }> =
+          data.evaluation?.lines || [];
+        const lines: LineEval[] = rawLines.map((l) => ({
+          score: l.eval?.type === "cp" ? (l.eval.value ?? 0) : 0,
+          mate: l.eval?.type === "mate" ? (l.eval.value ?? null) : null,
+          bestMove: l.bestMove || "",
+          bestLine: l.bestLine || [],
+        }));
         setEval({
           score: ev.type === "cp" ? ev.value : 0,
           mate: ev.type === "mate" ? ev.value : null,
           bestMove: data.evaluation?.bestMove || "",
           bestLine: data.evaluation?.bestLine || [],
+          lines,
           depth: data.evaluation?.depth || 0,
           loading: false,
         });
@@ -112,10 +129,12 @@ export function ConceptBoard({ positions }: { positions: Position[] }) {
 
   if (!pos) return null;
 
-  const sideToMove = displayFen.split(" ")[1] === "w" ? "white" : "black";
+  // Use the base position's side-to-move for orientation so the board
+  // doesn't flip every time the user explores a move.
+  const baseSide = baseFen.split(" ")[1] === "w" ? "white" : "black";
   const orientation = flipped
-    ? sideToMove === "white" ? "black" : "white"
-    : sideToMove;
+    ? baseSide === "white" ? "black" : "white"
+    : baseSide;
 
   // Handle piece drop (user moves a piece)
   function onPieceDrop(sourceSquare: string, targetSquare: string): boolean {
@@ -164,26 +183,35 @@ export function ConceptBoard({ positions }: { positions: Position[] }) {
   }
 
   // Arrows: only show on base position (not while exploring)
-  const arrows: { startSquare: string; endSquare: string; color: string }[] = [];
+  // Deduplicate by start+end squares to avoid React key collisions.
+  const arrowMap = new Map<string, { startSquare: string; endSquare: string; color: string }>();
 
   if (!isExploring) {
     const strongSq = sanToSquares(baseFen, pos.strongMove);
     if (strongSq) {
-      arrows.push({ startSquare: strongSq.from, endSquare: strongSq.to, color: "rgba(245, 158, 11, 0.8)" });
+      arrowMap.set(`${strongSq.from}-${strongSq.to}`, { startSquare: strongSq.from, endSquare: strongSq.to, color: "rgba(245, 158, 11, 0.8)" });
     }
 
     const weakSq = sanToSquares(baseFen, pos.weakMove);
     if (weakSq && pos.weakMove !== pos.strongMove) {
-      arrows.push({ startSquare: weakSq.from, endSquare: weakSq.to, color: "rgba(220, 38, 38, 0.5)" });
+      const key = `${weakSq.from}-${weakSq.to}`;
+      if (!arrowMap.has(key)) {
+        arrowMap.set(key, { startSquare: weakSq.from, endSquare: weakSq.to, color: "rgba(220, 38, 38, 0.5)" });
+      }
     }
   }
 
   if (showEngine && eval_.bestMove) {
     const sfSq = sanToSquares(displayFen, eval_.bestMove);
     if (sfSq) {
-      arrows.push({ startSquare: sfSq.from, endSquare: sfSq.to, color: "rgba(59, 130, 246, 0.6)" });
+      const key = `${sfSq.from}-${sfSq.to}`;
+      if (!arrowMap.has(key)) {
+        arrowMap.set(key, { startSquare: sfSq.from, endSquare: sfSq.to, color: "rgba(59, 130, 246, 0.6)" });
+      }
     }
   }
+
+  const arrows = Array.from(arrowMap.values());
 
   return (
     <div>
@@ -269,28 +297,33 @@ export function ConceptBoard({ positions }: { positions: Position[] }) {
         </Button>
       </div>
 
-      {/* Stockfish panel */}
-      {showEngine && !eval_.loading && eval_.bestMove && (
-        <div className="mt-3 rounded-lg border border-blue-500/20 bg-blue-500/5 p-3">
+      {/* Stockfish panel — multi-PV */}
+      {showEngine && (eval_.lines.length > 0 || eval_.loading) && (
+        <div className={`mt-3 rounded-lg border border-blue-500/20 bg-blue-500/5 p-3 ${eval_.loading ? "opacity-60" : ""}`}>
           <div className="flex items-center gap-2 text-xs text-blue-400">
-            <BarChart3 className="h-3 w-3" />
-            Stockfish depth {eval_.depth}
+            <BarChart3 className={`h-3 w-3 ${eval_.loading ? "animate-spin" : ""}`} />
+            {eval_.loading ? "Analyzing..." : `Stockfish depth ${eval_.depth}`}
           </div>
-          <div className="mt-1 flex items-baseline gap-3">
-            <span className="font-mono text-lg font-bold">
-              {eval_.mate !== null
-                ? `M${Math.abs(eval_.mate)}`
-                : `${eval_.score >= 0 ? "+" : ""}${(eval_.score / 100).toFixed(2)}`}
-            </span>
-            <span className="font-mono text-sm text-muted-foreground">
-              Best: {uciToSan(displayFen, eval_.bestMove)}
-            </span>
+          <div className="mt-2 space-y-1.5">
+            {eval_.lines.map((line, i) => {
+              const label = line.mate !== null
+                ? `M${Math.abs(line.mate)}`
+                : `${line.score >= 0 ? "+" : ""}${(line.score / 100).toFixed(2)}`;
+              const sanLine = line.bestLine.length > 0
+                ? uciLineToSan(displayFen, line.bestLine).slice(0, 6).join(" ")
+                : "";
+              return (
+                <div key={i} className={`flex items-baseline gap-2 ${i === 0 ? "" : "opacity-70"}`}>
+                  <span className={`font-mono font-bold min-w-[55px] text-right ${i === 0 ? "text-base" : "text-sm"}`}>
+                    {label}
+                  </span>
+                  <span className="font-mono text-xs text-muted-foreground truncate">
+                    {sanLine}
+                  </span>
+                </div>
+              );
+            })}
           </div>
-          {eval_.bestLine.length > 0 && (
-            <p className="mt-1 font-mono text-xs text-muted-foreground">
-              {uciLineToSan(displayFen, eval_.bestLine).slice(0, 6).join(" ")}
-            </p>
-          )}
         </div>
       )}
 

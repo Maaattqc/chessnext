@@ -31,7 +31,7 @@ WEAK_PATH = os.path.join(TOOLS, "networks", "weak-910127.pb.gz")
 POLICY_MAP = np.load(os.path.join(TOOLS, "attn_policy_map.npy"))
 POSITIONS_PATH = os.path.join(TOOLS, "positions_50k.npz")
 
-NUM_SIMULATIONS = 800  # AlphaZero standard
+NUM_SIMULATIONS = 400  # 400 sims = good enough for concept extraction, 2x faster
 BATCH_SIZE = 64
 MAX_ROLLOUT_DEPTH = 20
 
@@ -215,7 +215,7 @@ def main():
 
     # 1. Load
     print("\n[1/6] Loading positions...")
-    fens = load_positions(10000)
+    fens = load_positions(50000)
     print(f"  {len(fens)} positions")
 
     # 2. Networks
@@ -269,7 +269,7 @@ def main():
         return
 
     # Sample for MCTS (expensive: ~800 inferences per position)
-    max_mcts = min(30, len(disagreements))
+    max_mcts = min(800, len(disagreements))
     if len(disagreements) > max_mcts:
         np.random.RandomState(42).shuffle(disagreements)
         disagreements = disagreements[:max_mcts]
@@ -277,7 +277,7 @@ def main():
 
     # 4. MCTS + concept extraction
     print(f"\n[4/6] Running MCTS ({NUM_SIMULATIONS} sims) + L1-minimization...")
-    mcts = MCTS(strong, device, POLICY_MAP, num_sims=NUM_SIMULATIONS, batch_size=32)
+    mcts = MCTS(strong, device, POLICY_MAP, num_sims=NUM_SIMULATIONS, batch_size=64)
 
     vectors, positions = [], []
     n_ok, n_fail, n_nosubopt = 0, 0, 0
@@ -293,7 +293,7 @@ def main():
 
         # Get suboptimal path
         subopt_path = mcts.get_suboptimal_path(
-            root, board, min_value_diff=0.1, min_visit_ratio=0.05,
+            root, board, min_value_diff=0.02, min_visit_ratio=0.03,
             max_depth=MAX_ROLLOUT_DEPTH)
 
         if subopt_path is None or len(subopt_path) < 3:
@@ -351,7 +351,7 @@ def main():
     surv_pos = [positions[j] for j in surv_idx]
     surv_teach = teach[surv_idx]
 
-    groups = group_concepts(surv_vec, 0.5) if len(surv_vec) > 0 else []
+    groups = group_concepts(surv_vec, 0.35) if len(surv_vec) > 0 else []
 
     sep = "=" * 70
     print(f"\n{sep}")

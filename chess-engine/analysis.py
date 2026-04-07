@@ -61,7 +61,7 @@ def validate_fen(fen: str) -> chess.Board:
 _ANALYSIS_TIMEOUT = 10  # seconds – hard cap per analysis call
 
 
-def _stockfish_analysis(fen: str, depth: int) -> dict[str, Any] | None:
+def _stockfish_analysis(fen: str, depth: int, multi_pv: int = 1) -> dict[str, Any] | None:
     """Try to analyse with Stockfish. Returns ``None`` when unavailable."""
 
     if not STOCKFISH_PATH or not os.path.isfile(STOCKFISH_PATH):
@@ -74,32 +74,44 @@ def _stockfish_analysis(fen: str, depth: int) -> dict[str, Any] | None:
 
     try:
         board = chess.Board(fen)
-        info = engine.analyse(
+        infos = engine.analyse(
             board,
             chess.engine.Limit(depth=depth, time=_ANALYSIS_TIMEOUT),
+            multipv=multi_pv,
         )
 
-        score = info.get("score")
-        pv = info.get("pv", [])
+        # engine.analyse returns a list when multipv > 1, single dict when 1
+        if not isinstance(infos, list):
+            infos = [infos]
 
-        # Normalise score to white's perspective (centipawns or mate).
-        if score is not None:
-            white_score = score.white()
-            if white_score.is_mate():
-                eval_result = {"type": "mate", "value": white_score.mate()}
+        lines: list[dict[str, Any]] = []
+        for info in infos:
+            score = info.get("score")
+            pv = info.get("pv", [])
+
+            if score is not None:
+                white_score = score.white()
+                if white_score.is_mate():
+                    eval_result = {"type": "mate", "value": white_score.mate()}
+                else:
+                    eval_result = {"type": "cp", "value": white_score.score()}
             else:
-                eval_result = {"type": "cp", "value": white_score.score()}
-        else:
-            eval_result = {"type": "cp", "value": 0}
+                eval_result = {"type": "cp", "value": 0}
 
-        best_move = str(pv[0]) if pv else None
-        best_line = [str(m) for m in pv]
+            lines.append({
+                "eval": eval_result,
+                "bestMove": str(pv[0]) if pv else None,
+                "bestLine": [str(m) for m in pv],
+            })
+
+        top = lines[0] if lines else {"eval": {"type": "cp", "value": 0}, "bestMove": None, "bestLine": []}
 
         return {
-            "eval": eval_result,
-            "bestMove": best_move,
-            "bestLine": best_line,
-            "depth": info.get("depth", depth),
+            "eval": top["eval"],
+            "bestMove": top["bestMove"],
+            "bestLine": top["bestLine"],
+            "lines": lines,
+            "depth": infos[0].get("depth", depth) if infos else depth,
             "source": "stockfish",
         }
     except chess.engine.EngineTerminatedError:
@@ -121,7 +133,7 @@ PIECE_VALUES = {
 }
 
 
-def _mock_analysis(fen: str, depth: int) -> dict[str, Any]:
+def _mock_analysis(fen: str, depth: int, multi_pv: int = 1) -> dict[str, Any]:
     """Return a plausible evaluation based on material balance."""
     board = chess.Board(fen)
 
@@ -130,14 +142,23 @@ def _mock_analysis(fen: str, depth: int) -> dict[str, Any]:
         material += len(board.pieces(piece_type, chess.WHITE)) * value
         material -= len(board.pieces(piece_type, chess.BLACK)) * value
 
-    # Generate a legal move as "best move" so the response is usable.
     legal_moves = list(board.legal_moves)
-    best_move = str(legal_moves[0]) if legal_moves else None
+    lines: list[dict[str, Any]] = []
+    for i in range(min(multi_pv, len(legal_moves))):
+        lines.append({
+            "eval": {"type": "cp", "value": material},
+            "bestMove": str(legal_moves[i]),
+            "bestLine": [str(legal_moves[i])],
+        })
+
+    if not lines:
+        lines.append({"eval": {"type": "cp", "value": material}, "bestMove": None, "bestLine": []})
 
     return {
         "eval": {"type": "cp", "value": material},
-        "bestMove": best_move,
+        "bestMove": str(legal_moves[0]) if legal_moves else None,
         "bestLine": [str(m) for m in legal_moves[:3]],
+        "lines": lines,
         "depth": depth,
         "source": "mock",
     }
@@ -147,7 +168,7 @@ def _mock_analysis(fen: str, depth: int) -> dict[str, Any]:
 # Public API
 # ---------------------------------------------------------------------------
 
-def analyze_position(fen: str, depth: int = 20) -> dict[str, Any]:
+def analyze_position(fen: str, depth: int = 20, multi_pv: int = 1) -> dict[str, Any]:
     """Analyse a chess position and return evaluation data.
 
     Tries Stockfish first; falls back to a material-count heuristic.
@@ -156,8 +177,8 @@ def analyze_position(fen: str, depth: int = 20) -> dict[str, Any]:
     # defence-in-depth is cheap).
     validate_fen(fen)
 
-    result = _stockfish_analysis(fen, depth)
+    result = _stockfish_analysis(fen, depth, multi_pv)
     if result is not None:
         return result
 
-    return _mock_analysis(fen, depth)
+    return _mock_analysis(fen, depth, multi_pv)

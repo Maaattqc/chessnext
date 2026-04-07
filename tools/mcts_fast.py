@@ -39,7 +39,9 @@ class Node:
         return self.value_sum / self.visits if self.visits > 0 else FPU_VALUE
 
     def ucb(self, parent_visits):
-        return self.value + C_PUCT * self.prior * math.sqrt(parent_visits) / (1 + self.visits)
+        # Negate self.value: child stores value from ITS side-to-move (opponent),
+        # but we need Q from the PARENT's perspective (AlphaZero PUCT formula).
+        return -self.value + C_PUCT * self.prior * math.sqrt(parent_visits) / (1 + self.visits)
 
     def best_child(self):
         return max(self.children, key=lambda c: c.ucb(self.visits))
@@ -172,14 +174,15 @@ class BatchMCTS:
                     b.push(node.move)
                     path.append(node)
 
-                    # Virtual loss to encourage diversity
+                    # Virtual loss: make child look good from ITS perspective
+                    # so parent's UCB (-child.value) decreases, discouraging re-visits.
                     node.visits += 1
-                    node.value_sum -= 1.0
+                    node.value_sum += 1.0
 
                 if b.is_game_over():
                     # Terminal: undo virtual loss and backprop real value
                     node.visits -= 1
-                    node.value_sum += 1.0
+                    node.value_sum -= 1.0
                     result = b.result()
                     if result == "1-0":
                         v = 1.0 if b.turn == chess.BLACK else -1.0
@@ -207,7 +210,7 @@ class BatchMCTS:
                     zip(leaves, policies, values, leaf_paths)):
                 # Undo virtual loss
                 node.visits -= 1
-                node.value_sum += 1.0
+                node.value_sum -= 1.0
                 # Expand
                 self._expand(node, policy)
                 # Backprop
@@ -232,6 +235,7 @@ class BatchMCTS:
     def get_optimal_path(self, root, board, max_depth=20):
         """Most-visited path with activations."""
         path_boards = []
+        path_nodes = []
         node = root
         b = board.copy()
         moves = []
@@ -242,6 +246,7 @@ class BatchMCTS:
             node = node.most_visited()
             b.push(node.move)
             path_boards.append(b.copy())
+            path_nodes.append(node)
             moves.append(node.move)
             if b.is_game_over():
                 break
@@ -256,7 +261,7 @@ class BatchMCTS:
             b2.push(move)
             result.append({
                 "move": move, "san": san, "activation": act,
-                "visits": root.children[0].visits if i == 0 else 0,
+                "visits": path_nodes[i].visits,
             })
 
         return result

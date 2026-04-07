@@ -47,6 +47,13 @@ If you hit the same type of error 2+ times, add it here.
 - **Error:** `torch.cuda.get_device_properties(0).total_mem` → should be `total_memory`
 - **Rule:** Check PyTorch docs for your installed version, don't assume attribute names.
 
+### MCTS had three coupled sign/encoding bugs — all must be fixed together
+- **Bug 1 — UCB negation:** `ucb = self.value + ...` was missing negation. Child stores value from ITS side-to-move (opponent), but UCB needs Q from the PARENT's perspective. Fix: `ucb = -self.value + ...`
+- **Bug 2 — Virtual loss sign:** `value_sum -= 1.0` made `-child.value` larger → ENCOURAGED re-visits instead of discouraging. Fix: `value_sum += 1.0` (and undo `value_sum -= 1.0`).
+- **Bug 3 — History planes all zeros:** `board_to_planes` left planes 12-103 as zeros. Lc0 was trained with 8 half-moves of history; all-zeros was never seen during training. The value head hallucinated on complex positions (e.g., +8 Stockfish position evaluated as -1.0). Fix: repeat current position for all 8 history slots (standard Lc0 convention for single-position analysis).
+- **Symptoms:** "Strong" Leela moves were terrible (Qh4 at +7.41 for opponent). MCTS match rate vs Stockfish was 10%. After all 3 fixes: 72%. ALL Phase 0 v4 concepts were invalid.
+- **Rule:** (1) In MCTS, always negate child.value in UCB. (2) Virtual loss must decrease UCB, not increase it. (3) Never feed all-zero history to a network trained with history — repeat the current position. (4) Always cross-check MCTS top moves against Stockfish on ~20 positions before running a full pipeline.
+
 ## General Patterns
 
 ### stdout is buffered when redirected on Windows

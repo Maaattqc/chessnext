@@ -67,6 +67,7 @@ class AnalyzeRequest(BaseModel):
     fen: str = Field(..., max_length=100, description="FEN string of the position.")
     userRating: int = Field(..., ge=0, le=4000, description="Player rating (0-4000).")
     depth: int = Field(default=20, ge=1, le=40, description="Search depth (1-40).")
+    multiPv: int = Field(default=1, ge=1, le=5, description="Number of principal variations (1-5).")
 
 
 class EvalResult(BaseModel):
@@ -178,7 +179,7 @@ async def internal_analyze(
         raise HTTPException(status_code=400, detail=str(exc))
 
     # --- Analysis -------------------------------------------------------
-    evaluation = analyze_position(body.fen, body.depth)
+    evaluation = analyze_position(body.fen, body.depth, body.multiPv)
 
     # --- Concepts (placeholder — will be enriched later) ----------------
     concepts: list[str] = _detect_concepts(body.fen)
@@ -196,6 +197,25 @@ async def internal_analyze(
         concepts=concepts,
         coachNarrative=narrative,
     )
+
+
+@app.post("/internal/eval")
+async def internal_eval(
+    body: AnalyzeRequest,
+    x_internal_key: str = Header(..., alias="X-Internal-Key"),
+) -> dict[str, Any]:
+    """Fast Stockfish-only evaluation — no Claude narrative, no concept detection."""
+
+    if not INTERNAL_KEY or x_internal_key != INTERNAL_KEY:
+        raise HTTPException(status_code=401, detail="Invalid internal key.")
+
+    try:
+        validate_fen(body.fen)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+
+    evaluation = analyze_position(body.fen, body.depth, body.multiPv)
+    return {"evaluation": evaluation}
 
 
 class HumanMoveRequest(BaseModel):

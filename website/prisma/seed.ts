@@ -14,6 +14,8 @@ interface NamedConcept {
   summary: string;
   description: string;
   difficulty: string;
+  teachable?: boolean;
+  avg_teach?: number;
   positions: { fen: string; strong_line: string[]; weak_line: string[] }[];
 }
 
@@ -51,6 +53,8 @@ async function main() {
         positionCount: c.positions.length,
         sortOrder: i,
         isFree,
+        teachable: c.teachable !== false,
+        teachScore: c.avg_teach ?? 0,
       },
     });
 
@@ -72,7 +76,7 @@ async function main() {
       });
     }
 
-    console.log(`  ${i + 1}. ${c.name} (${isFree ? "free" : "paid"})`);
+    console.log(`  ${i + 1}. ${c.name} (${isFree ? "free" : "paid"}, ${c.teachable !== false ? "teachable" : "experimental"})`);
   }
 
   console.log(`\nDone. ${concepts.length} concepts seeded.`);

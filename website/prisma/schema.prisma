@@ -88,6 +88,8 @@ model Concept {
   positionCount Int      @map("position_count")
   sortOrder     Int      @default(0) @map("sort_order")
   isFree        Boolean  @default(false) @map("is_free")
+  teachable     Boolean  @default(true)
+  teachScore    Float    @default(0) @map("teach_score")
   createdAt     DateTime @default(now()) @map("created_at")
   updatedAt     DateTime @updatedAt @map("updated_at")
 

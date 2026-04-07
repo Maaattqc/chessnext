@@ -81,6 +81,7 @@ Format your response EXACTLY as JSON:
             result["positions"] = c["positions"]
             result["size"] = c["size"]
             result["avg_teach"] = c["avg_teach"]
+            result["teachable"] = c.get("teachable", False)
             named_concepts.append(result)
             print(f"  {i+1}. {result['name']} ({c['size']} pos, {result['difficulty']})")
         else:
