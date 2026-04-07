@@ -59,6 +59,13 @@ If you hit the same type of error 2+ times, add it here.
 - **Fix:** Run probes on PCA-reduced features (150-200 dims), use LBFGS solver
 - **Rule:** Always PCA first, then probe. Never fit sklearn on raw high-dim activations.
 
+### Transformer policy head produces garbage — all moves point to a8
+- **Error:** The Lc0 transformer loader produces policy outputs where every square has high affinity for square 56 (a8). Legal opening moves (e4, d4, Nf3) have negative logits. 94.5% "disagreement" rate between two networks = both are broken.
+- **Root cause:** NOT weight loading (verified: non-square matrices prove convention is correct). The forward pass has a bug — likely in DeepNorm alpha, Smolgen attention biases, or encoder layer norm ordering. Needs line-by-line comparison with lc0 C++ source.
+- **Impact:** ALL concept extraction results are invalid. The 4 concepts from Phase 0 were extracted from garbage policy outputs.
+- **Status:** OPEN. Need to debug by comparing intermediate activations with a reference implementation (lc0 binary or ONNX export).
+- **Rule:** Always validate a neural network loader by checking that known positions produce known-good outputs BEFORE running any pipeline on top of it.
+
 ### Never defer tests — write them alongside each feature
 - **Error:** Coded 13 routes and 5 pages without a single test file
 - **Symptom:** Zero test coverage, security rules half-applied, no confidence that code works
