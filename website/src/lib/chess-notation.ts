@@ -22,7 +22,6 @@ export function uciToSan(fen: string, uci: string): string {
 
 /**
  * Convert a list of UCI moves to SAN, playing them sequentially.
- * Returns as many SAN moves as possible; falls back to UCI for failures.
  */
 export function uciLineToSan(fen: string, uciMoves: string[]): string[] {
   if (!uciMoves.length) return [];
@@ -35,7 +34,6 @@ export function uciLineToSan(fen: string, uciMoves: string[]): string[] {
       result.push(uci);
       continue;
     }
-
     try {
       const from = uci.slice(0, 2);
       const to = uci.slice(2, 4);
@@ -44,9 +42,34 @@ export function uciLineToSan(fen: string, uciMoves: string[]): string[] {
       result.push(move?.san || uci);
     } catch {
       result.push(uci);
-      break; // Can't continue after a failed move
+      break;
     }
   }
 
   return result;
+}
+
+/**
+ * Convert a SAN move (e.g. "Nf3") to from/to squares for arrow display.
+ * Returns null if conversion fails.
+ */
+export function sanToSquares(
+  fen: string,
+  san: string
+): { from: string; to: string } | null {
+  if (!san) return null;
+
+  try {
+    const game = new Chess(fen);
+    const move = game.move(san);
+    if (move) {
+      return { from: move.from, to: move.to };
+    }
+  } catch {
+    // Maybe it's already UCI
+    if (san.length >= 4 && san[0] >= "a" && san[0] <= "h") {
+      return { from: san.slice(0, 2), to: san.slice(2, 4) };
+    }
+  }
+  return null;
 }

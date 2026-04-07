@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { Chessboard } from "react-chessboard";
 import { Button } from "@/components/ui/button";
-import { uciToSan } from "@/lib/chess-notation";
+import { uciToSan, sanToSquares } from "@/lib/chess-notation";
 import { ChevronLeft, ChevronRight, RotateCcw, BarChart3 } from "lucide-react";
 
 interface Position {
@@ -108,28 +108,33 @@ export function ConceptBoard({ positions }: { positions: Position[] }) {
 
   // Arrows: amber=strong, red=weak, blue=stockfish best
   const arrows: { startSquare: string; endSquare: string; color: string }[] = [];
-  if (pos.strongMove.length >= 4) {
+
+  const strongSq = sanToSquares(pos.fen, pos.strongMove);
+  if (strongSq) {
     arrows.push({
-      startSquare: pos.strongMove.slice(0, 2),
-      endSquare: pos.strongMove.slice(2, 4),
+      startSquare: strongSq.from,
+      endSquare: strongSq.to,
       color: "rgba(245, 158, 11, 0.8)",
     });
   }
-  if (pos.weakMove.length >= 4 && pos.weakMove !== pos.strongMove) {
+
+  const weakSq = sanToSquares(pos.fen, pos.weakMove);
+  if (weakSq && pos.weakMove !== pos.strongMove) {
     arrows.push({
-      startSquare: pos.weakMove.slice(0, 2),
-      endSquare: pos.weakMove.slice(2, 4),
+      startSquare: weakSq.from,
+      endSquare: weakSq.to,
       color: "rgba(220, 38, 38, 0.5)",
     });
   }
-  if (showEngine && eval_.bestMove && eval_.bestMove.length >= 4) {
-    const bm = eval_.bestMove;
-    // Only show if different from strong move
-    if (bm !== pos.strongMove) {
+
+  if (showEngine && eval_.bestMove) {
+    // Stockfish returns UCI, try both UCI and SAN
+    const sfSq = sanToSquares(pos.fen, eval_.bestMove);
+    if (sfSq && (!strongSq || sfSq.from !== strongSq.from || sfSq.to !== strongSq.to)) {
       arrows.push({
-        startSquare: bm.slice(0, 2),
-        endSquare: bm.slice(2, 4),
-        color: "rgba(59, 130, 246, 0.6)", // blue
+        startSquare: sfSq.from,
+        endSquare: sfSq.to,
+        color: "rgba(59, 130, 246, 0.6)",
       });
     }
   }
