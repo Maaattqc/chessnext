@@ -2,9 +2,10 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Chessboard } from "react-chessboard";
+import { Chess } from "chess.js";
 import { Button } from "@/components/ui/button";
-import { uciToSan, sanToSquares } from "@/lib/chess-notation";
-import { ChevronLeft, ChevronRight, RotateCcw, BarChart3 } from "lucide-react";
+import { uciToSan, uciLineToSan, sanToSquares } from "@/lib/chess-notation";
+import { ChevronLeft, ChevronRight, RotateCcw, BarChart3, Undo2 } from "lucide-react";
 
 interface Position {
   id: string;
@@ -16,7 +17,7 @@ interface Position {
 }
 
 interface StockfishEval {
-  score: number; // centipawns (positive = white advantage)
+  score: number;
   mate: number | null;
   bestMove: string;
   bestLine: string[];
@@ -25,12 +26,10 @@ interface StockfishEval {
 }
 
 function EvalBar({ score, mate }: { score: number; mate: number | null }) {
-  // Convert centipawns to a visual percentage (50% = equal)
   let pct: number;
   if (mate !== null) {
     pct = mate > 0 ? 98 : 2;
   } else {
-    // Sigmoid-like mapping: ±400cp maps to ~10-90%
     pct = 50 + 50 * (2 / (1 + Math.exp(-score / 200)) - 1);
     pct = Math.max(2, Math.min(98, pct));
   }
@@ -42,12 +41,10 @@ function EvalBar({ score, mate }: { score: number; mate: number | null }) {
   return (
     <div className="flex items-center gap-2">
       <div className="relative h-6 w-full overflow-hidden rounded-full bg-neutral-800">
-        {/* White portion */}
         <div
           className="absolute inset-y-0 left-0 rounded-full bg-white transition-all duration-500"
           style={{ width: `${pct}%` }}
         />
-        {/* Black portion is the background */}
       </div>
       <span className="min-w-[50px] text-right font-mono text-xs text-muted-foreground">
         {label}
@@ -64,7 +61,20 @@ export function ConceptBoard({ positions }: { positions: Position[] }) {
     score: 0, mate: null, bestMove: "", bestLine: [], depth: 0, loading: false,
   });
 
+  // Exploration mode: user can move pieces
+  const [currentFen, setCurrentFen] = useState<string | null>(null);
+  const [moveHistory, setMoveHistory] = useState<string[]>([]);
+
   const pos = positions[index];
+  const baseFen = pos?.fen || "";
+  const displayFen = currentFen || baseFen;
+  const isExploring = currentFen !== null;
+
+  // Reset exploration when changing position
+  useEffect(() => {
+    setCurrentFen(null);
+    setMoveHistory([]);
+  }, [index]);
 
   const fetchEval = useCallback(async (fen: string) => {
     setEval((e) => ({ ...e, loading: true }));
@@ -93,55 +103,91 @@ export function ConceptBoard({ positions }: { positions: Position[] }) {
     }
   }, []);
 
+  // Fetch eval when engine is toggled or position changes
   useEffect(() => {
-    if (showEngine && pos) {
-      fetchEval(pos.fen);
+    if (showEngine) {
+      fetchEval(displayFen);
     }
-  }, [showEngine, index, pos, fetchEval]);
+  }, [showEngine, displayFen, fetchEval]);
 
   if (!pos) return null;
 
-  const sideToMove = pos.fen.split(" ")[1] === "w" ? "white" : "black";
+  const sideToMove = displayFen.split(" ")[1] === "w" ? "white" : "black";
   const orientation = flipped
     ? sideToMove === "white" ? "black" : "white"
     : sideToMove;
 
-  // Arrows: amber=strong, red=weak, blue=stockfish best
-  const arrows: { startSquare: string; endSquare: string; color: string }[] = [];
+  // Handle piece drop (user moves a piece)
+  function onPieceDrop(sourceSquare: string, targetSquare: string): boolean {
+    try {
+      const game = new Chess(displayFen);
+      const move = game.move({
+        from: sourceSquare,
+        to: targetSquare,
+        promotion: "q", // Auto-promote to queen
+      });
 
-  const strongSq = sanToSquares(pos.fen, pos.strongMove);
-  if (strongSq) {
-    arrows.push({
-      startSquare: strongSq.from,
-      endSquare: strongSq.to,
-      color: "rgba(245, 158, 11, 0.8)",
-    });
+      if (move) {
+        setCurrentFen(game.fen());
+        setMoveHistory((h) => [...h, move.san]);
+        return true;
+      }
+    } catch {
+      // Invalid move
+    }
+    return false;
   }
 
-  const weakSq = sanToSquares(pos.fen, pos.weakMove);
-  if (weakSq && pos.weakMove !== pos.strongMove) {
-    arrows.push({
-      startSquare: weakSq.from,
-      endSquare: weakSq.to,
-      color: "rgba(220, 38, 38, 0.5)",
-    });
+  // Undo last move
+  function handleUndo() {
+    if (moveHistory.length === 0) return;
+
+    // Replay all moves except the last one from base FEN
+    const game = new Chess(baseFen);
+    const newHistory = moveHistory.slice(0, -1);
+    for (const san of newHistory) {
+      game.move(san);
+    }
+
+    if (newHistory.length === 0) {
+      setCurrentFen(null);
+    } else {
+      setCurrentFen(game.fen());
+    }
+    setMoveHistory(newHistory);
+  }
+
+  // Reset to original position
+  function handleReset() {
+    setCurrentFen(null);
+    setMoveHistory([]);
+  }
+
+  // Arrows: only show on base position (not while exploring)
+  const arrows: { startSquare: string; endSquare: string; color: string }[] = [];
+
+  if (!isExploring) {
+    const strongSq = sanToSquares(baseFen, pos.strongMove);
+    if (strongSq) {
+      arrows.push({ startSquare: strongSq.from, endSquare: strongSq.to, color: "rgba(245, 158, 11, 0.8)" });
+    }
+
+    const weakSq = sanToSquares(baseFen, pos.weakMove);
+    if (weakSq && pos.weakMove !== pos.strongMove) {
+      arrows.push({ startSquare: weakSq.from, endSquare: weakSq.to, color: "rgba(220, 38, 38, 0.5)" });
+    }
   }
 
   if (showEngine && eval_.bestMove) {
-    // Stockfish returns UCI, try both UCI and SAN
-    const sfSq = sanToSquares(pos.fen, eval_.bestMove);
-    if (sfSq && (!strongSq || sfSq.from !== strongSq.from || sfSq.to !== strongSq.to)) {
-      arrows.push({
-        startSquare: sfSq.from,
-        endSquare: sfSq.to,
-        color: "rgba(59, 130, 246, 0.6)",
-      });
+    const sfSq = sanToSquares(displayFen, eval_.bestMove);
+    if (sfSq) {
+      arrows.push({ startSquare: sfSq.from, endSquare: sfSq.to, color: "rgba(59, 130, 246, 0.6)" });
     }
   }
 
   return (
     <div>
-      {/* Eval bar (above board) */}
+      {/* Eval bar */}
       {showEngine && (
         <div className="mx-auto mb-2 max-w-[480px]">
           {eval_.loading ? (
@@ -156,7 +202,7 @@ export function ConceptBoard({ positions }: { positions: Position[] }) {
       <div className="mx-auto w-full max-w-[480px]">
         <Chessboard
           options={{
-            position: pos.fen,
+            position: displayFen,
             boardOrientation: orientation,
             arrows,
             boardStyle: {
@@ -165,13 +211,32 @@ export function ConceptBoard({ positions }: { positions: Position[] }) {
             },
             darkSquareStyle: { backgroundColor: "#8B6914" },
             lightSquareStyle: { backgroundColor: "#c4a86e" },
-            allowDragging: false,
+            allowDragging: true,
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            onPieceDrop: (args: any) =>
+              onPieceDrop(args.sourceSquare, args.targetSquare || ""),
           }}
         />
       </div>
 
+      {/* Move history (when exploring) */}
+      {isExploring && (
+        <div className="mx-auto mt-2 flex max-w-[480px] items-center gap-2 rounded-lg border border-amber-500/20 bg-amber-500/5 px-3 py-2">
+          <span className="text-xs text-amber-400">Exploring:</span>
+          <span className="flex-1 font-mono text-xs text-muted-foreground">
+            {moveHistory.join(" ")}
+          </span>
+          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={handleUndo} title="Undo">
+            <Undo2 className="h-3 w-3" />
+          </Button>
+          <Button variant="ghost" size="sm" className="h-6 text-xs" onClick={handleReset}>
+            Reset
+          </Button>
+        </div>
+      )}
+
       {/* Controls */}
-      <div className="mt-4 flex items-center justify-center gap-2">
+      <div className="mt-3 flex items-center justify-center gap-2">
         <Button
           variant="outline"
           size="icon"
@@ -204,7 +269,7 @@ export function ConceptBoard({ positions }: { positions: Position[] }) {
         </Button>
       </div>
 
-      {/* Stockfish analysis panel */}
+      {/* Stockfish panel */}
       {showEngine && !eval_.loading && eval_.bestMove && (
         <div className="mt-3 rounded-lg border border-blue-500/20 bg-blue-500/5 p-3">
           <div className="flex items-center gap-2 text-xs text-blue-400">
@@ -218,12 +283,12 @@ export function ConceptBoard({ positions }: { positions: Position[] }) {
                 : `${eval_.score >= 0 ? "+" : ""}${(eval_.score / 100).toFixed(2)}`}
             </span>
             <span className="font-mono text-sm text-muted-foreground">
-              Best: {uciToSan(pos.fen, eval_.bestMove)}
+              Best: {uciToSan(displayFen, eval_.bestMove)}
             </span>
           </div>
           {eval_.bestLine.length > 0 && (
             <p className="mt-1 font-mono text-xs text-muted-foreground">
-              {eval_.bestLine.slice(0, 6).join(" ")}
+              {uciLineToSan(displayFen, eval_.bestLine).slice(0, 6).join(" ")}
             </p>
           )}
         </div>
@@ -234,18 +299,18 @@ export function ConceptBoard({ positions }: { positions: Position[] }) {
         <div className="flex gap-4 text-sm">
           <div>
             <span className="font-mono text-amber-400">Strong: </span>
-            <span className="font-mono font-bold">{uciToSan(pos.fen, pos.strongMove)}</span>
+            <span className="font-mono font-bold">{pos.strongMove}</span>
           </div>
           <div>
             <span className="font-mono text-red-400">Weak: </span>
-            <span className="font-mono">{uciToSan(pos.fen, pos.weakMove)}</span>
+            <span className="font-mono">{pos.weakMove}</span>
           </div>
         </div>
         <p className="mt-2 text-sm text-muted-foreground">{pos.explanation}</p>
       </div>
 
       {/* Legend */}
-      <div className="mt-2 flex gap-4 text-xs text-muted-foreground">
+      <div className="mt-2 flex flex-wrap gap-4 text-xs text-muted-foreground">
         <div className="flex items-center gap-1">
           <div className="h-2 w-4 rounded bg-amber-500/80" /> Leela strong
         </div>
@@ -257,6 +322,9 @@ export function ConceptBoard({ positions }: { positions: Position[] }) {
             <div className="h-2 w-4 rounded bg-blue-500/60" /> Stockfish
           </div>
         )}
+        <div className="flex items-center gap-1">
+          Drag pieces to explore
+        </div>
       </div>
     </div>
   );
