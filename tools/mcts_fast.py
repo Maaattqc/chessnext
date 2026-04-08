@@ -312,3 +312,82 @@ class BatchMCTS:
                 return result
 
         return None
+
+    def get_weak_path(self, root, board, weak_move, min_visits=20, max_depth=20):
+        """Follow the weak network's preferred move in the existing MCTS tree.
+
+        Returns path starting from weak_move if it has enough visits, else None.
+        """
+        weak_node = None
+        for child in root.children:
+            if child.move == weak_move:
+                weak_node = child
+                break
+
+        if weak_node is None or weak_node.visits < min_visits:
+            return None
+
+        path_boards = []
+        path_nodes = []
+        moves = []
+
+        b = board.copy()
+        node = weak_node
+        b.push(node.move)
+        path_boards.append(b.copy())
+        path_nodes.append(node)
+        moves.append(node.move)
+
+        for _ in range(max_depth - 1):
+            if not node.children:
+                break
+            node = node.most_visited()
+            b.push(node.move)
+            path_boards.append(b.copy())
+            path_nodes.append(node)
+            moves.append(node.move)
+            if b.is_game_over():
+                break
+
+        acts = self._get_activation_batch(path_boards) if path_boards else []
+
+        result = []
+        b2 = board.copy()
+        for i, (move, act) in enumerate(zip(moves, acts)):
+            san = b2.san(move)
+            b2.push(move)
+            result.append({
+                "move": move, "san": san, "activation": act,
+                "visits": path_nodes[i].visits,
+            })
+
+        return result
+
+    def search_from_move(self, board, forced_move, num_sims=200, max_depth=20):
+        """Run MCTS after forcing a specific first move.
+
+        Used when the forced move has insufficient visits in the main tree.
+        """
+        b = board.copy()
+        b.push(forced_move)
+
+        if b.is_game_over():
+            return None
+
+        old_sims = self.num_sims
+        self.num_sims = num_sims
+        root = self.search(b)
+        self.num_sims = old_sims
+
+        cont_path = self.get_optimal_path(root, b, max_depth=max_depth - 1)
+        if not cont_path:
+            return None
+
+        # Prepend the forced move with its activation
+        forced_act = self._get_activation_batch([b])[0]
+        forced_san = board.san(forced_move)
+
+        return [{
+            "move": forced_move, "san": forced_san, "activation": forced_act,
+            "visits": num_sims,
+        }] + cont_path

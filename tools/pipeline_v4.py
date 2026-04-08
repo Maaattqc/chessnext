@@ -34,6 +34,8 @@ POSITIONS_PATH = os.path.join(TOOLS, "positions_50k.npz")
 NUM_SIMULATIONS = 400  # 400 sims = good enough for concept extraction, 2x faster
 BATCH_SIZE = 64
 MAX_ROLLOUT_DEPTH = 20
+WEAK_MIN_VISITS = 20   # Minimum visits to reuse weak move's tree branch
+FALLBACK_SIMS = 200    # MCTS sims for fallback search on weak move
 
 
 def load_positions(max_n=10000):
@@ -118,6 +120,7 @@ def find_disagreements(strong_pol, weak_pol, fens, policy_map):
             results.append({
                 "idx": i, "fen": fens[i],
                 "s_san": board.san(s_move), "w_san": board.san(w_move),
+                "w_move": w_move,  # chess.Move for MCTS tree lookup
             })
         except Exception:
             continue
@@ -281,22 +284,52 @@ def main():
 
     vectors, positions = [], []
     n_ok, n_fail, n_nosubopt = 0, 0, 0
+    n_tier1, n_tier2, n_tier3 = 0, 0, 0
 
     for i, dis in enumerate(disagreements):
         board = chess.Board(dis["fen"])
+        weak_move = dis["w_move"]
 
-        # Run MCTS
+        # Run MCTS on strong network
         root = mcts.search(board)
 
-        # Get optimal path (most visited)
+        # Optimal path: strong network's most-visited branch
         opt_path = mcts.get_optimal_path(root, board, max_depth=MAX_ROLLOUT_DEPTH)
 
-        # Get suboptimal path
-        subopt_path = mcts.get_suboptimal_path(
-            root, board, min_value_diff=0.02, min_visit_ratio=0.03,
-            max_depth=MAX_ROLLOUT_DEPTH)
+        # Skip if weak move is same as optimal (shouldn't happen, but safety)
+        if opt_path and weak_move == opt_path[0]["move"]:
+            n_nosubopt += 1
+            continue
 
-        if subopt_path is None or len(subopt_path) < 3:
+        # Suboptimal path: use WEAK network's preferred move (3-tier)
+        subopt_path = None
+        tier_used = ""
+
+        # Tier 1: Look up weak move in existing MCTS tree
+        subopt_path = mcts.get_weak_path(
+            root, board, weak_move,
+            min_visits=WEAK_MIN_VISITS, max_depth=MAX_ROLLOUT_DEPTH)
+        if subopt_path and len(subopt_path) >= 3:
+            tier_used = "tree"
+            n_tier1 += 1
+        else:
+            # Tier 2: Run separate short MCTS from weak move
+            subopt_path = mcts.search_from_move(
+                board, weak_move,
+                num_sims=FALLBACK_SIMS, max_depth=MAX_ROLLOUT_DEPTH)
+            if subopt_path and len(subopt_path) >= 3:
+                tier_used = "fallback"
+                n_tier2 += 1
+            else:
+                # Tier 3: Original heuristic as last resort
+                subopt_path = mcts.get_suboptimal_path(
+                    root, board, min_value_diff=0.02, min_visit_ratio=0.03,
+                    max_depth=MAX_ROLLOUT_DEPTH)
+                if subopt_path and len(subopt_path) >= 3:
+                    tier_used = "heuristic"
+                    n_tier3 += 1
+
+        if not subopt_path or len(subopt_path) < 3:
             n_nosubopt += 1
             continue
 
@@ -320,6 +353,8 @@ def main():
                 "sub_depth": len(subopt_path),
                 "opt_visits": opt_path[0].get("visits", 0) if opt_path else 0,
                 "sub_visits": subopt_path[0].get("visits", 0) if subopt_path else 0,
+                "weak_net_move": dis["w_san"],
+                "sub_method": tier_used,
             })
             n_ok += 1
         else:
@@ -329,9 +364,11 @@ def main():
             elapsed = time.time() - t_start
             rate = (i + 1) / elapsed * 60
             print(f"    {i+1}/{len(disagreements)}: {n_ok} ok, {n_fail} fail, "
-                  f"{n_nosubopt} no-subopt ({rate:.1f} pos/min)")
+                  f"{n_nosubopt} no-subopt, tiers={n_tier1}/{n_tier2}/{n_tier3} "
+                  f"({rate:.1f} pos/min)")
 
     print(f"  {n_ok} concepts, {n_fail} infeasible, {n_nosubopt} no suboptimal path")
+    print(f"  Tiers: {n_tier1} tree, {n_tier2} fallback, {n_tier3} heuristic")
 
     if n_ok == 0:
         print("ERROR: No concepts.")

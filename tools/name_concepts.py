@@ -37,7 +37,8 @@ named_concepts = []
 
 for i, c in enumerate(concepts):
     positions_text = ""
-    for j, p in enumerate(c["positions"]):
+    sample = c["positions"][:5]  # Only send 5 representative positions
+    for j, p in enumerate(sample):
         positions_text += f"  Position {j+1}: FEN={p['fen']}\n"
         positions_text += f"    Strong network plays: {p['strong']}\n"
         positions_text += f"    Weak network plays:   {p['weak']}\n\n"
